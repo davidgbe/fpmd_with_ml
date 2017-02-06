@@ -4,7 +4,7 @@
 
 1. Install Pip globally
 
-  Follow the instuctions found (here)[https://pip.pypa.io/en/stable/installing/].
+  Follow the instuctions found [here](https://pip.pypa.io/en/stable/installing/).
 
 1. Install Virtualenv
 
