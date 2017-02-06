@@ -1,6 +1,8 @@
 ### First-Principles Molecular Dynamics with Machine Learning
 
 ### Getting Started
+ 
+1. Clone the repo and cd into it
 
 1. Install Pip globally
 
