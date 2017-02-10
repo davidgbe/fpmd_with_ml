@@ -18,11 +18,11 @@
 
 1. Take ownership of start and install scripts
 
-  ```chmod u+x install run save_reqs```
+  ```chmod u+x scripts/*```
 
 ### Starting the virtualenv
 
-  ```source ./run``` will start the virtualenv
+  ```source ./scripts/run``` will start the virtualenv
 
   ```deactivate``` will terminate the session
 
@@ -30,4 +30,14 @@
 
   With the virtualenv running, do:
 
-  ```source ./install```
+  ```source ./scripts/install```
+
+### Adding dependencies
+
+  You can add dependences with:
+
+  ```pip install <package-name>```
+
+  To save the new dependency, run:
+
+  ```./scripts/save_reqs```
