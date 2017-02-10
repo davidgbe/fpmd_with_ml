@@ -18,7 +18,7 @@
 
 1. Take ownership of start and install scripts
 
-  ```chmod u+x install run```
+  ```chmod u+x install run save_reqs```
 
 ### Starting the virtualenv
 
