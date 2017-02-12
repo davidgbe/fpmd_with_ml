@@ -12,6 +12,10 @@ class GaussianProcess:
     def compute_covariance(self, X_1, X_2=None):
         if X_2 is None:
             X_2 = X_1
+        if len(X_1.shape) == 1:
+            X_1 = X_1.reshape(1, X_1.size)
+        if len(X_2.shape) == 1:
+            X_2 = X_2.reshape(1, X_2.size)
         if X_1.shape[1] != X_2.shape[1]:
             raise ValueError('X_1 and X_2 must have the same data dimension')
         (rows_1, cols) = X_1.shape
@@ -26,20 +30,18 @@ class GaussianProcess:
         return covariance_mat
 
     def single_predict(self, target_x, training_cov_inv, Y_t, X):
-        print target_x
         training_target_cov = self.compute_covariance(X, target_x)
         #target_cov = self.compute_covariance(target_x)
 
-        means = training_target_cov.T.dot(training_cov_inv).dot(Y_t)
+        mean = training_target_cov.T.dot(training_cov_inv).dot(Y_t)
         #stdevs = target_cov - training_target_cov.T.dot(training_cov_inv).dot(training_target_cov)
-        num_predictions = target_x.shape[0]
-        return means.reshape(num_predictions)
+        return mean.reshape(1)
 
     def batch_predict(self, X, Y, target_X):
         training_cov_inv = inv(self.compute_covariance(X))
         Y_t = Y.reshape(Y.size, 1)
 
-        return np.apply_along_axis(self.single_predict, 0, target_X, training_cov_inv, Y_t, X)
+        return np.apply_along_axis(self.single_predict, 1, target_X, training_cov_inv, Y_t, X)
 
     def predict(self, X, Y, target_X):
         return self.batch_predict(X, Y, target_X)

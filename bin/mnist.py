@@ -29,9 +29,8 @@ class MNISTTrainer:
     gp = GP()
 
     print 'Predicting'
-    (predictions, errors) = gp.predict(train_X, train_Y, X)
+    predictions = gp.predict(train_X, train_Y, X)
     print predictions
-    print errors
     #print classification_report(Y, predictions)
 
   @staticmethod
@@ -98,4 +97,4 @@ if __name__ == '__main__':
   if len(sys.argv) > 1:
     command = sys.argv[1]
     if command == 'predict':
-      MNISTTrainer.gaussian_process_predict(num_training_examples=1200, num_targets=1)
+      MNISTTrainer.gaussian_process_predict(num_training_examples=1200, num_targets=50)
