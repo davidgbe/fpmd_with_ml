@@ -31,7 +31,8 @@ class MNISTTrainer:
     print 'Predicting'
     (predictions, errors) = gp.predict(train_X, train_Y, X)
     print predictions
-    print classification_report(Y, predictions)
+    print errors
+    #print classification_report(Y, predictions)
 
   @staticmethod
   def load_labels(rel_path):
