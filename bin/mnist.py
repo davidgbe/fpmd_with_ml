@@ -6,27 +6,31 @@ import sys
 from sklearn.metrics import classification_report
 from lib.gaussian_process.model import GaussianProcess as GP
 from lib.gaussian_process import utilities
+from numpy.linalg import inv, norm as mag
+from math import exp
 
 class MNISTTrainer:
   @staticmethod
   def gaussian_process_predict(num_training_examples=None, num_targets=None):
     train_X = MNISTTrainer.load_images_dataset('../datasets/mnist/train-images-idx3-ubyte')
+    #train_X = utilities.normalize(train_X)
     train_Y = MNISTTrainer.load_labels('../datasets/mnist/train-labels-idx1-ubyte')
     if num_training_examples is not None:
       train_X = train_X[:num_training_examples]
       train_Y = train_Y[:num_training_examples]
 
     X = MNISTTrainer.load_images_dataset('../datasets/mnist/t10k-images-idx3-ubyte')
+    #X = utilities.normalize(X)
     Y = MNISTTrainer.load_labels('../datasets/mnist/t10k-labels-idx1-ubyte')
     if num_targets is not None:
-      X = X[num_targets]
-      Y = Y[num_targets]
+      X = X[:num_targets]
+      Y = Y[:num_targets]
 
     gp = GP()
 
     print 'Predicting'
     (predictions, errors) = gp.predict(train_X, train_Y, X)
-
+    print predictions
     print classification_report(Y, predictions)
 
   @staticmethod
@@ -93,4 +97,4 @@ if __name__ == '__main__':
   if len(sys.argv) > 1:
     command = sys.argv[1]
     if command == 'predict':
-      MNISTTrainer.gaussian_process_predict(num_training_examples=1200, num_targets=10)
+      MNISTTrainer.gaussian_process_predict(num_training_examples=1200, num_targets=1)

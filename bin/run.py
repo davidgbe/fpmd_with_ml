@@ -6,13 +6,12 @@ def func(x, y):
   print np.dot(x, y)
   return np.dot(x, y)
 
-model = GP(func)
+model = GP()
 
-X = np.array([[1, 2], [3, 4]])
-Y = np.array([1, 3])
+X = np.array([[1, 2], [3, 4], [5, 6]])
+Y = np.array([1, 3, 5])
 
-target = np.array([[1, 2]])
+target = np.array([[1, 2], [1, 3], [3, 5]])
 
-(means, stdevs) = model.predict(X, Y, target)
+means = model.predict(X, Y, target)
 print means
-print stdevs

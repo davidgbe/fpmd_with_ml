@@ -16,8 +16,8 @@ class GaussianProcess:
             raise ValueError('X_1 and X_2 must have the same data dimension')
         (rows_1, cols) = X_1.shape
         (rows_2, cols_2) = X_2.shape
-        flattened_1 = X_1.reshape(rows_1*cols)
-        flattened_2 = X_2.reshape(rows_2*cols)
+        flattened_1 = np.array(X_1).reshape(rows_1*cols)
+        flattened_2 = np.array(X_2).reshape(rows_2*cols)
 
         covariance_mat = np.zeros((rows_1, rows_2))
         for i in range(0, rows_1*cols, cols):
@@ -27,7 +27,6 @@ class GaussianProcess:
 
     def predict(self, X, Y, target_x):
         training_cov = self.compute_covariance(X)
-        print training_cov
         training_cov_inv = inv(training_cov)
         training_target_cov = self.compute_covariance(X, target_x)
         target_cov = self.compute_covariance(target_x)
@@ -35,7 +34,13 @@ class GaussianProcess:
 
         means = training_target_cov.T.dot(training_cov_inv).dot(Y)
         stdevs = target_cov - training_target_cov.T.dot(training_cov_inv).dot(training_target_cov)
+
+        print 'Results:'
+        print means.shape
+        print stdevs.shape
+
         num_predictions = target_x.shape[0]
+        print num_predictions
         return (means.reshape(num_predictions), stdevs.reshape(num_predictions))
 
     def default_covariance_func(self, x_1, x_2):
