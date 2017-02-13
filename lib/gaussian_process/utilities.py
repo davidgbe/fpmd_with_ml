@@ -3,10 +3,12 @@ import os
 import matplotlib.pyplot as plt
 
 def normalize(mat):
-  normed = mat - mat.mean(0)
+  mean = mat.mean(0)
+  normed = mat - mean
+  std = normed.std(0)
   # Taken from http://stackoverflow.com/questions/26248654/numpy-return-0-with-divide-by-zero
   with np.errstate(divide='ignore', invalid='ignore'):
-    normed = np.true_divide(normed, mat.std(0))
+    normed = np.true_divide(normed, std)
     normed[normed == np.inf] = 0
     normed = np.nan_to_num(normed)
   return normed
