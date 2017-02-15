@@ -29,7 +29,7 @@ class MNISTTrainer:
     gp = GP()
 
     print 'Training...'
-    gp.fit(train_X, train_Y)
+    gp.fit(train_X[:100], train_Y[:100])
 
 
     # print 'Predicting...'
