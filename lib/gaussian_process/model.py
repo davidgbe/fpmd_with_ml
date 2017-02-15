@@ -1,6 +1,7 @@
 import numpy as np
 from numpy.linalg import inv, norm as mag
 from math import exp
+import time
 
 class GaussianProcess:
     def __init__(self, covariance_func=None):
@@ -67,10 +68,18 @@ class GaussianProcess:
         return exp(-0.5 * (mag(x_1 - x_2) / self.theta_length)**2.0)
 
     def gradient_log_prob(self, X, Y, training_cov_inv, gradient_func):
+        print 'Computing gradient of covariance matrix'
+        start = time.time()
         gradient_cov_mat = self.cartesian_operation(X, X_2=None, operation=gradient_func)
+        end = time.time()
+        print end - start
 
+        print 'Other operations'
+        start = time.time()
         term_1 = np.trace(training_cov_inv.dot(gradient_cov_mat))
         term_2 = Y.T.dot(training_cov_inv).dot(gradient_cov_mat).dot(training_cov_inv).dot(Y)
+        end = time.time()
+        print end - start
         return 0.5 * (term_1 + term_2)
 
     def default_learning_rate(self, i):
