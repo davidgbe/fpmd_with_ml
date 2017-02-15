@@ -28,15 +28,15 @@ class MNISTTrainer:
 
     gp = GP()
 
-    print 'Training...'
-    gp.fit(train_X[:100], train_Y[:100])
+    # print 'Training...'
+    # gp.fit(train_X[:100], train_Y[:100])
 
 
-    # print 'Predicting...'
-    # predictions = gp.predict(train_X, train_Y, X)
-    # print predictions
-    # print Y
-    # print classification_report(Y, predictions)
+    print 'Predicting...'
+    predictions = gp.predict(train_X, train_Y, X)
+    print predictions
+    print Y
+    print classification_report(Y, predictions)
 
   @staticmethod
   def load_labels(rel_path):
@@ -102,4 +102,4 @@ if __name__ == '__main__':
   if len(sys.argv) > 1:
     command = sys.argv[1]
     if command == 'predict':
-      MNISTTrainer.gaussian_process_predict(num_training_examples=1200, num_targets=50)
+      MNISTTrainer.gaussian_process_predict(num_training_examples=10000, num_targets=50)
