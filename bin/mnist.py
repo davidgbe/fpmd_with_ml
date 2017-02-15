@@ -28,11 +28,15 @@ class MNISTTrainer:
 
     gp = GP()
 
-    print 'Predicting'
-    predictions = gp.predict(train_X, train_Y, X)
-    print predictions
-    print Y
-    #print classification_report(Y, predictions)
+    print 'Training...'
+    gp.fit(train_X, train_Y)
+
+
+    # print 'Predicting...'
+    # predictions = gp.predict(train_X, train_Y, X)
+    # print predictions
+    # print Y
+    # print classification_report(Y, predictions)
 
   @staticmethod
   def load_labels(rel_path):
