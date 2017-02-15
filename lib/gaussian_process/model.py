@@ -76,6 +76,8 @@ class GaussianProcess:
         end = time.time()
         print end - start
 
+        print gradient_cov_mat
+
         print 'Other operations'
         start = time.time()
         term_1 = np.trace(training_cov_inv.dot(gradient_cov_mat))
@@ -94,15 +96,17 @@ class GaussianProcess:
         else:
             return 0.1
 
-    def gradient_descent(self, X, Y, initial_val, gradient_func):
+    def gradient_descent(self, X, Y, hyperparam, gradient_func):
         training_cov_inv = inv(self.compute_covariance(X))
-        final_val = initial_val
         for i in range(120000):
-            final_val += (self.default_learning_rate(i) * self.gradient_log_prob(X, Y, training_cov_inv, gradient_func))
-            print final_val
+            print 'gradient:'
+            gradient = self.gradient_log_prob(X, Y, training_cov_inv, gradient_func)
+            print gradient
+            self.__dict__[hyperparam] += (self.default_learning_rate(i) * gradient)
+            print self.__dict__[hyperparam]
         return final_val
 
     def fit(self, X, Y):
         #self.theta_amp = self.gradient_descent(X, Y, 1.0, self.covariance_mat_derivative_theta_amp)
-        self.theta_length = self.gradient_descent(X, Y, self.theta_length, self.covariance_mat_derivative_theta_length)
+        self.gradient_descent(X, Y, 'theta_length', self.covariance_mat_derivative_theta_length)
 
