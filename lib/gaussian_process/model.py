@@ -6,7 +6,7 @@ import time
 class GaussianProcess:
     def __init__(self, covariance_func=None):
         self.theta_amp = 1.0
-        self.theta_length = 83.0
+        self.theta_length = 1000.0
         if covariance_func is None:
             self.covariance_func = self.default_covariance_func
         else:
@@ -64,7 +64,7 @@ class GaussianProcess:
 
     # for varying the hyperparameters
     def covariance_mat_derivative_theta_length(self, x_1, x_2):
-        return self.default_covariance_func(x_1, x_2) * mag(x_1 - x_2) / self.theta_length**3.0
+        return self.default_covariance_func(x_1, x_2) * mag(x_1 - x_2)**2.0 / self.theta_length**3.0
 
     def covariance_mat_derivative_theta_amp(self, x_1, x_2):
         return 2.0 * self.theta_amp * exp(-0.5 * (mag(x_1 - x_2) / self.theta_length)**2.0)
@@ -76,8 +76,6 @@ class GaussianProcess:
         end = time.time()
         print end - start
 
-        print gradient_cov_mat
-
         print 'Other operations'
         start = time.time()
         term_1 = np.trace(training_cov_inv.dot(gradient_cov_mat))
@@ -87,22 +85,23 @@ class GaussianProcess:
         return 0.5 * (term_1 + term_2)
 
     def default_learning_rate(self, i):
-        if i < 500:
+        if i < 600:
             return 10000.0
         elif i < 1000:
             return 1000.0
-        elif i < 2000:
+        elif i < 1100:
             return 500.0
         else:
             return 10.0
 
     def gradient_descent(self, X, Y, hyperparam, gradient_func):
         training_cov_inv = inv(self.compute_covariance(X))
-        for i in range(120000):
-            print 'gradient:'
+        for i in range(1000):
             gradient = self.gradient_log_prob(X, Y, training_cov_inv, gradient_func)
+            print 'gradient'
             print gradient
             self.__dict__[hyperparam] += (self.default_learning_rate(i) * gradient)
+            print hyperparam
             print self.__dict__[hyperparam]
         return final_val
 
