@@ -2,45 +2,17 @@ import numpy as np
 from numpy.linalg import inv, norm as mag
 from math import exp
 import time
+from gradient_descent import gradient_descent
+from kernel_methods import default_covariance_func, cartesian_operation, covariance_mat_derivative_theta_amp, covariance_mat_derivative_theta_length
+# from multiprocessing import Pool
 
 class GaussianProcess:
     def __init__(self, covariance_func=None):
-        self.theta_amp = 1.0
-        self.theta_length = 38701.8316828
-        if covariance_func is None:
-            self.covariance_func = self.default_covariance_func
-        else:
-            self.covariance_func = covariance_func
-
-    # runs an operation iteratively for every pair selected from X_1 and X_2
-    def cartesian_operation(self, X_1, X_2=None, operation=None):
-        if operation is None:
-            operation = self.covariance_func
-        if X_2 is None:
-            X_2 = X_1
-        if len(X_1.shape) == 1:
-            X_1 = X_1.reshape(1, X_1.size)
-        if len(X_2.shape) == 1:
-            X_2 = X_2.reshape(1, X_2.size)
-        if X_1.shape[1] != X_2.shape[1]:
-            raise ValueError('X_1 and X_2 must have the same data dimension')
-        (rows_1, cols) = X_1.shape
-        (rows_2, cols_2) = X_2.shape
-        flattened_1 = np.array(X_1).reshape(rows_1*cols)
-        flattened_2 = np.array(X_2).reshape(rows_2*cols)
-
-        transformed_mat = np.zeros((rows_1, rows_2))
-        for i in range(0, rows_1*cols, cols):
-            for j in range(0, rows_2*cols, cols):
-                transformed_mat[i/cols, j/cols] = operation(flattened_1[i:i+cols], flattened_2[j:j+cols])
-        return transformed_mat
-
-    # computes covariance matrix according to the provided covariance function
-    def compute_covariance(self, X_1, X_2=None):
-        return self.cartesian_operation(X_1, X_2)
+        covariance_func = default_covariance_func if covariance_func is None else covariance_func
+        self.hyperparams = { 'theta_amp': 1.0, 'theta_length': 38701.8316828 }
 
     def single_predict(self, target_x, training_cov_inv, Y_t, X):
-        training_target_cov = self.compute_covariance(X, target_x)
+        training_target_cov = cartesian_operation(X, function=default_covariance_func)
         #target_cov = self.compute_covariance(target_x)
 
         mean = training_target_cov.T.dot(training_cov_inv).dot(Y_t)
@@ -48,7 +20,7 @@ class GaussianProcess:
         return mean.reshape(1)
 
     def batch_predict(self, X, Y, target_X):
-        training_cov_inv = inv(self.compute_covariance(X))
+        training_cov_inv = inv(cartesian_operation(X, function=default_covariance_func))
         Y_t = Y.reshape(Y.size, 1)
 
         predictions =  np.apply_along_axis(self.single_predict, 1, target_X, training_cov_inv, Y_t, X)
@@ -58,53 +30,7 @@ class GaussianProcess:
     def predict(self, X, Y, target_X):
         return self.batch_predict(X, Y, target_X)
 
-    def default_covariance_func(self, x_1, x_2):
-        #print mag(x_1 - x_2)
-        return self.theta_amp**2.0 * exp(-0.5 * (mag(x_1 - x_2) / self.theta_length)**2.0)
-
-    # for varying the hyperparameters
-    def covariance_mat_derivative_theta_length(self, x_1, x_2):
-        return self.default_covariance_func(x_1, x_2) * mag(x_1 - x_2)**2.0 / self.theta_length**3.0
-
-    def covariance_mat_derivative_theta_amp(self, x_1, x_2):
-        return 2.0 * self.theta_amp * exp(-0.5 * (mag(x_1 - x_2) / self.theta_length)**2.0)
-
-    def gradient_log_prob(self, X, Y, training_cov_inv, gradient_func):
-        print 'Computing gradient of covariance matrix'
-        start = time.time()
-        gradient_cov_mat = self.cartesian_operation(X, X_2=None, operation=gradient_func)
-        end = time.time()
-        print end - start
-
-        print 'Other operations'
-        start = time.time()
-        term_1 = np.trace(training_cov_inv.dot(gradient_cov_mat))
-        term_2 = Y.T.dot(training_cov_inv).dot(gradient_cov_mat).dot(training_cov_inv).dot(Y)
-        end = time.time()
-        print end - start
-        return 0.5 * (term_1 + term_2)
-
-    def default_learning_rate(self, i):
-        if i < 2000:
-            return 10000.0
-        elif i < 3000:
-            return 1000.0
-        elif i < 3500:
-            return 500.0
-        else:
-            return 10.0
-
-    def gradient_descent(self, X, Y, hyperparam, gradient_func):
-        training_cov_inv = inv(self.compute_covariance(X))
-        for i in range(4000):
-            gradient = self.gradient_log_prob(X, Y, training_cov_inv, gradient_func)
-            print 'gradient'
-            print gradient
-            self.__dict__[hyperparam] += (self.default_learning_rate(i) * gradient)
-            print hyperparam
-            print self.__dict__[hyperparam]
-
     def fit(self, X, Y):
-        #self.theta_amp = self.gradient_descent(X, Y, 1.0, self.covariance_mat_derivative_theta_amp)
-        self.gradient_descent(X, Y, 'theta_length', self.covariance_mat_derivative_theta_length)
+        self.theta_amp = gradient_descent('theta_amp', self.hyperparams, covariance_mat_derivative_theta_amp, X, Y)
+        self.theta_length = gradient_descent('theta_length', self.hyperparams, covariance_mat_derivative_theta_length, X, Y)
 
