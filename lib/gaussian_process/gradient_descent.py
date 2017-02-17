@@ -9,22 +9,25 @@ from copy import deepcopy
 def gradient_descent(param_to_tune, hyperparams, gradient_func, X, Y, learning_rate=None, epochs=4000):
     learning_rate = default_learning_rate if learning_rate is None else learning_rate
 
+    covariance_func = partial(default_covariance_func, hyperparams=hyperparams)
     params = deepcopy(hyperparams)
-    parameterized_gradient_func = partial(gradient_func, hyperparams=params)
+    gradient_func = partial(gradient_func, hyperparams=params)
 
-    training_cov_inv = inv(cartesian_operation(X, function=default_covariance_func))
+
+    training_cov_inv = inv(cartesian_operation(X, function=covariance_func))
     for i in range(epochs):
-        gradient = gradient_log_prob(parameterized_gradient_func, X, Y, training_cov_inv)
+        print params
+        gradient = gradient_log_prob(gradient_func, X, Y, training_cov_inv)
         print 'gradient'
         print gradient
-        hyperparams[param_to_tune] += (learning_rate(i) * gradient)
+        params[param_to_tune] += (learning_rate(i) * gradient)
         print params[param_to_tune]
     return params[param_to_tune]
 
 def gradient_log_prob(gradient_func, X, Y, training_cov_inv):
     # print 'Computing gradient of covariance matrix'
     # start = time.time()
-    gradient_cov_mat = cartesian_operation(X, operation=gradient_func)
+    gradient_cov_mat = cartesian_operation(X, function=gradient_func)
     # end = time.time()
     # print end - start
     term_1 = np.trace(training_cov_inv.dot(gradient_cov_mat))
