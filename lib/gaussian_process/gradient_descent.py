@@ -31,11 +31,11 @@ def gradient_descent(hyperparams, X, Y, learning_rate=None, epochs=4000):
     return params
 
 def gradient_log_prob(gradient_func, X, Y, training_cov_inv):
-    # print 'Computing gradient of covariance matrix'
-    # start = time.time()
+    print 'Computing gradient of covariance matrix'
+    start = time.time()
     gradient_cov_mat = cartesian_operation(X, function=gradient_func)
-    # end = time.time()
-    # print end - start
+    end = time.time()
+    print '%d seconds' % (end - start)
     term_1 = np.trace(training_cov_inv.dot(gradient_cov_mat))
     term_2 = Y.T.dot(training_cov_inv).dot(gradient_cov_mat).dot(training_cov_inv).dot(Y)
     return 0.5 * (term_1 + term_2)
