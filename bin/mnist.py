@@ -13,14 +13,12 @@ class MNISTTrainer:
   @staticmethod
   def gaussian_process_predict(num_training_examples=None, num_targets=None):
     train_X = MNISTTrainer.load_images_dataset('../datasets/mnist/train-images-idx3-ubyte')
-    #train_X = utilities.normalize(train_X)
     train_Y = MNISTTrainer.load_labels('../datasets/mnist/train-labels-idx1-ubyte')
     if num_training_examples is not None:
       train_X = train_X[:num_training_examples]
       train_Y = train_Y[:num_training_examples]
 
     X = MNISTTrainer.load_images_dataset('../datasets/mnist/t10k-images-idx3-ubyte')
-    #X = utilities.normalize(X)
     Y = MNISTTrainer.load_labels('../datasets/mnist/t10k-labels-idx1-ubyte')
     if num_targets is not None:
       X = X[:num_targets]
@@ -28,9 +26,8 @@ class MNISTTrainer:
 
     gp = GP()
 
-    # print 'Training...'
-    # gp.fit(train_X[:200], train_Y[:200])
-
+    print 'Training...'
+    gp.fit(train_X[:300], train_Y[:300])
 
     print 'Predicting...'
     predictions = gp.predict(train_X, train_Y, X)
