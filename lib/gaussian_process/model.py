@@ -14,7 +14,7 @@ class GaussianProcess:
         self.covariance_func = partial(self.covariance_func, hyperparams=self.hyperparams)
 
     def single_predict(self, target_x, training_cov_inv, Y_t, X):
-        training_target_cov = cartesian_operation(X, function=self.covariance_func)
+        training_target_cov = cartesian_operation(X, target_x, function=self.covariance_func)
         #target_cov = self.compute_covariance(target_x)
 
         mean = training_target_cov.T.dot(training_cov_inv).dot(Y_t)
