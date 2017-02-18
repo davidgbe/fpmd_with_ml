@@ -61,15 +61,8 @@ def parallel_cartesian_operation(X_1, X_2=None, function=None):
     flattened_1 = np.array(X_1).reshape(rows_1*cols)
     flattened_2 = np.array(X_2).reshape(rows_2*cols)
 
-    print flattened_1
-    print flattened_2
-
     iter_size_1 = chunk_size_1 * cols
     iter_size_2 = chunk_size_2 * cols
-
-    print 'itersizes'
-    print iter_size_1
-    print iter_size_2
 
     async_results = []
 
@@ -77,13 +70,8 @@ def parallel_cartesian_operation(X_1, X_2=None, function=None):
 
     for i in range(0, rows_1, chunk_size_1):
         for j in range(0, rows_2, chunk_size_2):
-            print 'i: %d' % i
-            print 'j: %d' % j
             chunk_i = flattened_1[ (cols * i) : ((cols * i) + iter_size_1) ]
             chunk_j = flattened_2[ (cols * j) : ((cols * j) + iter_size_2) ]
-
-            print chunk_i
-            print chunk_j
             async_results.append(pool.apply_async(operation_on_chunk, (chunk_i, chunk_j, function, cols)))
 
     async_results = [ res.get(timeout=100) for res in async_results]
@@ -92,7 +80,6 @@ def parallel_cartesian_operation(X_1, X_2=None, function=None):
     chunks_num_2 = int(ceil(float(rows_2) / chunk_size_2))
 
     results = [ np.concatenate(async_results[j:j+chunks_num_2], axis=1) for j in range(0, chunks_num_1*chunks_num_2, chunks_num_2) ]
-    print results
     return np.concatenate(results)
 
 def get_gradient_funcs(hyperparams):
