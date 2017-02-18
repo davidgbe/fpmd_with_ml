@@ -1,6 +1,7 @@
 import numpy as np
 from numpy.linalg import norm as mag
 from math import exp
+from functools import partial
 
 def default_covariance_func(x_1, x_2, hyperparams):
     return hyperparams['theta_amp']**2.0 * exp(-0.5 * (mag(x_1 - x_2) / hyperparams['theta_length'])**2.0)
@@ -33,3 +34,9 @@ def cartesian_operation(X_1, X_2=None, function=None):
         for j in range(0, rows_2*cols, cols):
             transformed_mat[i/cols, j/cols] = function(flattened_1[i:i+cols], flattened_2[j:j+cols])
     return transformed_mat
+
+def get_gradient_funcs(hyperparams):
+    return {
+        'theta_amp': partial(covariance_mat_derivative_theta_amp, hyperparams=hyperparams),
+        'theta_length': partial(covariance_mat_derivative_theta_length, hyperparams=hyperparams)
+    }
