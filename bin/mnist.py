@@ -26,9 +26,8 @@ class MNISTTrainer:
 
     gp = GP()
 
-    # print 'Training...'
-    # gp.fit(train_X[:200], train_Y[:200])
-
+    print 'Training...'
+    gp.fit(train_X[:300], train_Y[:300])
 
     print 'Predicting...'
     predictions = gp.predict(train_X, train_Y, X)

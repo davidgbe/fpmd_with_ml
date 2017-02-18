@@ -5,12 +5,11 @@ import time
 from gradient_descent import gradient_descent
 from kernel_methods import default_covariance_func, cartesian_operation
 from functools import partial
-# from multiprocessing import Pool
 
 class GaussianProcess:
     def __init__(self, covariance_func=None):
         self.covariance_func = default_covariance_func if covariance_func is None else covariance_func
-        self.hyperparams = {'theta_amp': 6009545.557726562, 'theta_length': 220.2023856989457}
+        self.hyperparams = {'theta_amp': 5099.8942307928328, 'theta_length': 99.999891273880237}
         self.covariance_func = partial(self.covariance_func, hyperparams=self.hyperparams)
 
     def single_predict(self, target_x, training_cov_inv, Y_t, X):
@@ -25,7 +24,7 @@ class GaussianProcess:
         training_cov_inv = inv(cartesian_operation(X, function=self.covariance_func))
         Y_t = Y.reshape(Y.size, 1)
 
-        predictions =  np.apply_along_axis(self.single_predict, 1, target_X, training_cov_inv, Y_t, X)
+        predictions = np.apply_along_axis(self.single_predict, 1, target_X, training_cov_inv, Y_t, X)
         (rows, cols) = predictions.shape
         return predictions.reshape(rows*cols)
 
