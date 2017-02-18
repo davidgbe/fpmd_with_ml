@@ -26,9 +26,8 @@ class MNISTTrainer:
 
     gp = GP()
 
-    # print 'Training...'
-    # gp.fit(train_X[:200], train_Y[:200])
-
+    print 'Training...'
+    gp.fit(train_X[:300], train_Y[:300])
 
     print 'Predicting...'
     predictions = gp.predict(train_X, train_Y, X)
@@ -100,4 +99,4 @@ if __name__ == '__main__':
   if len(sys.argv) > 1:
     command = sys.argv[1]
     if command == 'predict':
-      MNISTTrainer.gaussian_process_predict(num_training_examples=100, num_targets=50)
+      MNISTTrainer.gaussian_process_predict(num_training_examples=3000, num_targets=50)
