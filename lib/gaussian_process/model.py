@@ -33,3 +33,5 @@ class GaussianProcess:
 
     def fit(self, X, Y):
         self.hyperparams = optimize_hyperparams(self.hyperparams, X, Y)
+        print 'RESULT:'
+        print self.hyperparams

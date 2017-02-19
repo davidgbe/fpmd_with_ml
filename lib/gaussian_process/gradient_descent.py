@@ -2,7 +2,7 @@ import numpy as np
 from numpy.linalg import inv, norm as mag
 from math import exp, log
 import time
-from kernel_methods import cartesian_operation, default_covariance_func, get_gradient_funcs
+from kernel_methods import cartesian_operation, default_covariance_func, get_gradient_funcs, distance
 from functools import partial
 from copy import deepcopy
 from random import random
@@ -27,8 +27,7 @@ def gradient_descent(hyperparams, X, Y, learning_rate=None, epochs=50):
         for param_name in hyperparams:
             # compute gradient of log probability with respect to the parameter
             gradients[param_name] = gradient_log_prob(gradient_funcs[param_name], X, Y, training_cov_inv)
-        for param_name in hyperparams:
-            # update each parameter after all the gradients have been computed
+            # update each parameter according to learning rate and gradient
             params[param_name] += (learning_rate(i) * gradients[param_name])
         print 'params:'
         print params
@@ -60,30 +59,40 @@ def calc_log_prob(X, Y, training_cov_inv, covariance_func):
 
 def default_learning_rate(i):
     if i < 10:
-        return 1000.0
+        return 0.01
     elif i < 30:
-        return 100.0
+        return 0.005
     elif i < 40:
-        return 50.0
+        return 0.001
     else:
-        return 1.0
+        return 0.0001
 
-def generate_random_hyperparams(params):
+def generate_random_hyperparams(params, fixed={}):
     rand_params = deepcopy(params)
     for name in params:
-        rand_params[name] = random() * exp(10.0*random())
+        if name in fixed:
+            rand_params[name] = fixed[name]
+        else:
+            rand_params[name] = 10.0 * random()
     return rand_params
 
-def optimize_hyperparams(params, X, Y, rand_restarts=10):
+def optimize_hyperparams(params, X, Y, rand_restarts=30):
+    distances = cartesian_operation(X, function=distance)
+    print distances
+    print distances.mean()
     best_candidate = None
     for i in range(0, rand_restarts):
-        new_params = generate_random_hyperparams(params)
+        new_params = generate_random_hyperparams(params, {'theta_length': distances.mean()})
         print new_params
-        candidate = gradient_descent(new_params, X, Y)
-        # if new candidates log prob is higher than best candidate's
-        print candidate
-        if best_candidate is None or candidate[1] > best_candidate[1]:
-            best_candidate = candidate
+        try: 
+            candidate = gradient_descent(new_params, X, Y)
+            # if new candidates log prob is higher than best candidate's
+            print candidate
+            if best_candidate is None or candidate[1] > best_candidate[1]:
+                best_candidate = candidate
+        except np.linalg.linalg.LinAlgError as e:
+            print 'An error occurred'
+            continue
     # return the best set of params found
     return best_candidate[1]
 

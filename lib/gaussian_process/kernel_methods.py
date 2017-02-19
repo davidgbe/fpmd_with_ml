@@ -4,6 +4,9 @@ from math import exp, ceil, sqrt
 from functools import partial
 from multiprocessing import Pool, cpu_count
 
+def distance(x_1, x_2):
+    return mag(x_1 - x_2)
+
 def default_covariance_func(x_1, x_2, hyperparams):
     return hyperparams['theta_amp']**2.0 * exp(-0.5 * (mag(x_1 - x_2) / hyperparams['theta_length'])**2.0)
 
@@ -57,7 +60,7 @@ def cartesian_operation(X_1, X_2=None, function=None, cores=None):
             chunk_j = flattened_2[ (cols * j) : ((cols * j) + iter_size_2) ]
             async_results.append(pool.apply_async(operation_on_chunk, (chunk_i, chunk_j, function, cols)))
 
-    async_results = [ res.get(timeout=100) for res in async_results]
+    async_results = [ res.get(timeout=1000) for res in async_results]
     pool.terminate()
 
     chunks_num_1 = int(ceil(float(rows_1) / chunk_size_1))
