@@ -23,7 +23,6 @@ def gradient_descent(hyperparams, X, Y, learning_rate=None, epochs=4000):
         for param_name in hyperparams:
             # compute gradient of log probability with respect to the parameter
             gradients[param_name] = gradient_log_prob(gradient_funcs[param_name], X, Y, training_cov_inv)
-            log_probs[param_name] = log_prob(X, Y, training_cov_inv)
         for param_name in hyperparams:
             # update each parameter after all the gradients have been computed
             params[param_name] += (learning_rate(i) * gradients[param_name])
@@ -31,8 +30,8 @@ def gradient_descent(hyperparams, X, Y, learning_rate=None, epochs=4000):
         print params
         print 'gradients:'
         print gradients
-        print 'log_probs:'
-        print log_probs
+        print 'log_prob:'
+        print log_prob(X, Y, training_cov_inv, covariance_func)
     return params
 
 def gradient_log_prob(gradient_func, X, Y, training_cov_inv):
@@ -45,7 +44,7 @@ def gradient_log_prob(gradient_func, X, Y, training_cov_inv):
     term_2 = Y.T.dot(training_cov_inv).dot(gradient_cov_mat).dot(training_cov_inv).dot(Y)
     return 0.5 * (term_1 + term_2)
 
-def log_prob(X, Y, training_cov_inv):
+def log_prob(X, Y, training_cov_inv, covariance_func):
     term_1 = Y.T.dot(training_cov_inv).dot(Y)
     term_2 = log(mag(cartesian_operation(X, function=covariance_func)))
     return -0.5 * (term_1 + term_2)
