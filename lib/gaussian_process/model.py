@@ -2,14 +2,14 @@ import numpy as np
 from numpy.linalg import inv, norm as mag
 from math import exp
 import time
-from gradient_descent import gradient_descent
+from gradient_descent import optimize_hyperparams
 from kernel_methods import default_covariance_func, cartesian_operation
 from functools import partial
 
 class GaussianProcess:
     def __init__(self, covariance_func=None):
         self.covariance_func = default_covariance_func if covariance_func is None else covariance_func
-        self.hyperparams = {'theta_amp': 3265.5291180057402, 'theta_length': 582.37787487547848}
+        self.hyperparams = {'theta_amp': 1.0, 'theta_length': 1.0}
         self.covariance_func = partial(self.covariance_func, hyperparams=self.hyperparams)
 
     def single_predict(self, target_x, training_cov_inv, Y_t, X):
@@ -32,4 +32,4 @@ class GaussianProcess:
         return self.batch_predict(X, Y, target_X)
 
     def fit(self, X, Y):
-        self.hyperparams = gradient_descent(self.hyperparams, X, Y)
+        self.hyperparams = optimize_hyperparams(self.hyperparams, X, Y)
