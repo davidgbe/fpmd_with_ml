@@ -7,7 +7,7 @@ from functools import partial
 from copy import deepcopy
 from random import random
 
-def gradient_descent(hyperparams, X, Y, learning_rate=None, epochs=4000):
+def gradient_descent(hyperparams, X, Y, learning_rate=None, epochs=50):
     learning_rate = default_learning_rate if learning_rate is None else learning_rate
 
     gradients = deepcopy(hyperparams)
@@ -59,11 +59,11 @@ def calc_log_prob(X, Y, training_cov_inv, covariance_func):
     return -0.5 * (term_1 + term_2)
 
 def default_learning_rate(i):
-    if i < 2000:
+    if i < 10:
         return 1000.0
-    elif i < 3000:
+    elif i < 30:
         return 100.0
-    elif i < 3500:
+    elif i < 40:
         return 50.0
     else:
         return 1.0
