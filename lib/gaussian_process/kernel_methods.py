@@ -14,6 +14,7 @@ def covariance_mat_derivative_theta_length(x_1, x_2, hyperparams):
 def covariance_mat_derivative_theta_amp(x_1, x_2, hyperparams):
     return 2.0 * hyperparams['theta_amp'] * exp(-0.5 * (mag(x_1 - x_2) / hyperparams['theta_length'])**2.0)
 
+# applies function pairwise for two arrays
 def operation_on_chunk(chunk_1, chunk_2, function, func_input_size):
     transformed_mat = np.zeros((chunk_1.size/func_input_size, chunk_2.size/func_input_size))
     for i in range(0, chunk_1.size, func_input_size):
@@ -22,6 +23,7 @@ def operation_on_chunk(chunk_1, chunk_2, function, func_input_size):
     return transformed_mat
 
 # runs an operation iteratively for every pair selected from X_1 and X_2
+# distributes work across cores provided
 def cartesian_operation(X_1, X_2=None, function=None, cores=None):
     cores = cpu_count() if cores is None else cores
     # must change this to be a parametrized func
@@ -56,6 +58,7 @@ def cartesian_operation(X_1, X_2=None, function=None, cores=None):
             async_results.append(pool.apply_async(operation_on_chunk, (chunk_i, chunk_j, function, cols)))
 
     async_results = [ res.get(timeout=100) for res in async_results]
+    pool.terminate()
 
     chunks_num_1 = int(ceil(float(rows_1) / chunk_size_1))
     chunks_num_2 = int(ceil(float(rows_2) / chunk_size_2))
