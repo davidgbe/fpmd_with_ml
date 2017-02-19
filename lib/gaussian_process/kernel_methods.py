@@ -1,6 +1,6 @@
 import numpy as np
 from numpy.linalg import norm as mag
-from math import exp, ceil
+from math import exp, ceil, sqrt
 from functools import partial
 from multiprocessing import Pool, cpu_count
 
@@ -23,8 +23,7 @@ def operation_on_chunk(chunk_1, chunk_2, function, func_input_size):
 
 # runs an operation iteratively for every pair selected from X_1 and X_2
 def cartesian_operation(X_1, X_2=None, function=None, cores=None):
-    chunk_size_1 = 2
-    chunk_size_2 = 3
+    cores = cpu_count() if cores is None else cores
     # must change this to be a parametrized func
     function = default_covariance_func if (function is None) else function
     if X_2 is None:
@@ -40,12 +39,16 @@ def cartesian_operation(X_1, X_2=None, function=None, cores=None):
     flattened_1 = np.array(X_1).reshape(rows_1*cols)
     flattened_2 = np.array(X_2).reshape(rows_2*cols)
 
+    chunk_size_1 = int(sqrt(rows_1 * rows_2 / cores))
+    chunk_size_2 = chunk_size_1
+    print chunk_size_1
+
     iter_size_1 = chunk_size_1 * cols
     iter_size_2 = chunk_size_2 * cols
 
     async_results = []
 
-    pool = Pool(cpu_count() if cores is None else cores)
+    pool = Pool(cores)
 
     for i in range(0, rows_1, chunk_size_1):
         for j in range(0, rows_2, chunk_size_2):
