@@ -14,6 +14,7 @@ def gradient_descent(hyperparams, X, Y, learning_rate=None, epochs=4000):
     log_probs = deepcopy(hyperparams)
     covariance_func = partial(default_covariance_func, hyperparams=params)
     gradient_funcs = get_gradient_funcs(params)
+    log_prob = 1.0
 
     # for number of epochs
     for i in range(epochs):
@@ -31,7 +32,12 @@ def gradient_descent(hyperparams, X, Y, learning_rate=None, epochs=4000):
         print 'gradients:'
         print gradients
         print 'log_prob:'
-        print log_prob(X, Y, training_cov_inv, covariance_func)
+        new_log_prob = calc_log_prob(X, Y, training_cov_inv, covariance_func)
+        print new_log_prob
+        if abs(log_prob - new_log_prob) < 0.00001:
+            return params
+        else:
+            log_prob = new_log_prob
     return params
 
 def gradient_log_prob(gradient_func, X, Y, training_cov_inv):
@@ -44,7 +50,7 @@ def gradient_log_prob(gradient_func, X, Y, training_cov_inv):
     term_2 = Y.T.dot(training_cov_inv).dot(gradient_cov_mat).dot(training_cov_inv).dot(Y)
     return 0.5 * (term_1 + term_2)
 
-def log_prob(X, Y, training_cov_inv, covariance_func):
+def calc_log_prob(X, Y, training_cov_inv, covariance_func):
     term_1 = Y.T.dot(training_cov_inv).dot(Y)
     term_2 = log(mag(cartesian_operation(X, function=covariance_func)))
     return -0.5 * (term_1 + term_2)
