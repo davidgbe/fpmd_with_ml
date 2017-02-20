@@ -6,6 +6,7 @@ from kernel_methods import cartesian_operation, default_covariance_func, get_gra
 from functools import partial
 from copy import deepcopy
 from random import random
+import utilities
 
 def gradient_descent(hyperparams, X, Y, learning_rate=None, epochs=50):
     learning_rate = default_learning_rate if learning_rate is None else learning_rate
@@ -21,7 +22,6 @@ def gradient_descent(hyperparams, X, Y, learning_rate=None, epochs=50):
     for i in range(epochs):
         # generate inverse covariance matrix based on current hyperparameters
         training_cov = cartesian_operation(X, function=covariance_func)
-        print training_cov
         training_cov_inv = inv(training_cov)
         # for each hyperparameter
         for param_name in hyperparams:
@@ -73,27 +73,23 @@ def generate_random_hyperparams(params, fixed={}):
         if name in fixed:
             rand_params[name] = fixed[name]
         else:
-            rand_params[name] = 10.0 * random()
+            rand_params[name] = 10000.0 * random()
     return rand_params
 
 def optimize_hyperparams(params, X, Y, rand_restarts=30):
     distances = cartesian_operation(X, function=distance)
-    print distances
-    print distances.mean()
     best_candidate = None
     for i in range(0, rand_restarts):
         new_params = generate_random_hyperparams(params, {'theta_length': distances.mean()})
-        print new_params
         try: 
             candidate = gradient_descent(new_params, X, Y)
             # if new candidates log prob is higher than best candidate's
-            print candidate
             if best_candidate is None or candidate[1] > best_candidate[1]:
                 best_candidate = candidate
         except np.linalg.linalg.LinAlgError as e:
             print 'An error occurred'
             continue
     # return the best set of params found
-    return best_candidate[1]
+    return best_candidate[0]
 
 
