@@ -13,14 +13,12 @@ class MNISTTrainer:
   @staticmethod
   def gaussian_process_predict(num_training_examples=None, num_targets=None):
     train_X = MNISTTrainer.load_images_dataset('../datasets/mnist/train-images-idx3-ubyte')
-    #train_X = utilities.normalize(train_X)
     train_Y = MNISTTrainer.load_labels('../datasets/mnist/train-labels-idx1-ubyte')
     if num_training_examples is not None:
       train_X = train_X[:num_training_examples]
       train_Y = train_Y[:num_training_examples]
 
     X = MNISTTrainer.load_images_dataset('../datasets/mnist/t10k-images-idx3-ubyte')
-    #X = utilities.normalize(X)
     Y = MNISTTrainer.load_labels('../datasets/mnist/t10k-labels-idx1-ubyte')
     if num_targets is not None:
       X = X[:num_targets]
@@ -28,15 +26,14 @@ class MNISTTrainer:
 
     gp = GP()
 
-    # print 'Training...'
-    # gp.fit(train_X[:100], train_Y[:100])
-
+    print 'Training...'
+    gp.fit(train_X[:500], train_Y[:500])
 
     print 'Predicting...'
     predictions = gp.predict(train_X, train_Y, X)
     print predictions
     print Y
-    print classification_report(Y, predictions)
+    #print classification_report(Y, predictions)
 
   @staticmethod
   def load_labels(rel_path):
@@ -102,4 +99,4 @@ if __name__ == '__main__':
   if len(sys.argv) > 1:
     command = sys.argv[1]
     if command == 'predict':
-      MNISTTrainer.gaussian_process_predict(num_training_examples=10000, num_targets=50)
+      MNISTTrainer.gaussian_process_predict(num_training_examples=3000, num_targets=50)
