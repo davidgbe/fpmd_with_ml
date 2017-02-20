@@ -1,4 +1,5 @@
 import numpy as np
+from numpy.linalg import norm as mag
 
 ## GENERATORS ##
 
@@ -36,35 +37,46 @@ def rand_box_muller():
 def particles_distance(positions_mat, particle1, particle2, length):
     x_diff = np.abs(positions_mat[particle1,0]-positions_mat[particle2,0])
     x_diff = np.where(x_diff < 0.5*length, x_diff, length-x_diff)
+    
     y_diff = np.abs(positions_mat[particle1,1]-positions_mat[particle2,1])
     y_diff = np.where(y_diff < 0.5*length, y_diff, length-y_diff)
+    
     z_diff = np.abs(positions_mat[particle1,2]-positions_mat[particle2,2])
     z_diff = np.where(z_diff < 0.5*length, z_diff, length-z_diff)
+    
     return np.sqrt(x_diff**2 + y_diff**2 + z_diff**2)
 
 # To get x, y, or z component of distance between two particles, over the magnitude of their total distance
 def particle_component_ratio(positions_mat, component, particle1, particle2, length):
     total_distance = particles_distance(positions_mat, particle1, particle2, length)
     component_distance = positions_mat[particle1,component]-positions_mat[particle2,component]
+    
     if(component_distance > 0.5*length):
         component_distance = component_distance - length
     elif (component_distance < -0.5*length):
         component_distance = component_distance + length
     if(total_distance == 0):
         return 0
+    
     return component_distance/total_distance
 
-# To get the magnitude of a particle's velocity
-def particle_velocity(velocities_mat, particle_num):
-    x_velocity = velocities_mat[particle_num,0]
-    y_velocity = velocities_mat[particle_num,1]
-    z_velocity = velocities_mat[particle_num,2]
-    return np.sqrt(x_velocity**2 + y_velocity**2 + z_velocity**2)
+# To get the total kinetic energy
+def find_kin_energy(velocities_mat, particle_mass):
+    return 0.5*particle_mass*np.sum([ mag(velocities_mat[i])**2.0 for i in range(velocities_mat.shape[0]) ])
+
+#To figure out if the particle is on the corner of a cube
+def on_corner(positions_mat, particle_num):
+    x = positions_mat[particle_num,0]
+    y = positions_mat[particle_num,1]
+    z = positions_mat[particle_num,2]
+    if(x%0.2 == 0 and y%0.2 == 0 and z%0.2 == 0):
+        return True
+    return False   
 
 # The engine!
 class MDEngine:
     # Initialization
-    def __init__(self, temp=120.0, num_particles=500, length=1.0, position_file=None):
+    def __init__(self, temp=120.0, num_particles=500, length=0.00001, position_file=None):
 
         ## Constants/values for this engine ##
         self.tau_0 = 10.0**-13
@@ -75,9 +87,9 @@ class MDEngine:
         self.epsilon = self.temp*self.k_b
         self.omega = self.length**3.0
         self.r_0 = (self.omega*3.0/(4.0*np.pi*self.num_particles))**(1.0/3.0)
-        self.particle_mass = (self.tau_0**2.0)*self.epsilon/(self.r_0**2.0)
         self.sigma = (0.8*self.omega/self.num_particles)**(1.0/3.0)
         self.r_c = 2.5*self.sigma
+        self.particle_mass = (self.tau_0**2.0)*self.epsilon/(self.r_0**2.0)
         self.del_t = self.tau_0*(10**-2)
 
         if position_file is None:
@@ -86,7 +98,6 @@ class MDEngine:
         else:
             # get positions from position file
             pass
-        self.generate_masses()
         self.generate_velocities()
 
         self.calculate_total_energies()
@@ -97,8 +108,10 @@ class MDEngine:
         self.calculate_forces()
         self.calculate_1st_new_pos_velos()
         self.calculate_total_energies()
-        # print(self.total_kin_energy)
-        # print(self.total_pot_energy)
+        print("kinetic")
+        print(self.total_kin_energy)
+        print("potential")
+        print(self.total_pot_energy)
         print(self.energy_per_particle)
 
     # Generate face centered cubic positions for particles
@@ -142,12 +155,6 @@ class MDEngine:
         #self.orig_pos_mat = orig_pos_mat
         self.prev_pos_mat = prev_pos_mat
 
-    # Generate masses for all the particles (setting to 1 for all right now)
-    def generate_masses(self):
-        masses_mat = np.empty((self.num_particles,1))
-        masses_mat.fill(self.particle_mass)
-        self.masses_mat = masses_mat
-
     # Generate random velocities for each particle, and fix such that total temperature is correct
     def generate_velocities(self):
         velocities_mat = np.zeros((self.num_particles, 3))
@@ -155,16 +162,15 @@ class MDEngine:
             for j in range(3):
                 velocities_mat[i,j] = rand_box_muller()
 
-        total_kin_energy = 0
-        for i in range(self.num_particles):
-            total_kin_energy += (self.masses_mat[i,0]*(particle_velocity(velocities_mat,i)**2))/2
+        total_kin_energy = find_kin_energy(velocities_mat, self.particle_mass)
 
-        temp_prime = total_kin_energy*2/(3*self.num_particles*self.k_b)
+        temp_prime = (2.0/3.0)*total_kin_energy/(self.num_particles*self.k_b)
         velocity_fix = np.sqrt(self.temp/temp_prime)
 
         for i in range(self.num_particles):
             for j in range(3):
                 velocities_mat[i,j] = velocities_mat[i,j]*velocity_fix
+
         self.velocities_mat = velocities_mat
 
 
@@ -179,7 +185,7 @@ class MDEngine:
                     if(r_ij > self.r_c):
                         pass
                     else:
-                        force_ij_signed_magnitude = -4*self.epsilon*(-12*self.sigma**12/(r_ij**13) + 6*self.sigma**6/(r_ij**7))\
+                        force_ij_signed_magnitude = -4.*self.epsilon*(-12.*self.sigma**12./(r_ij**13.) + 6.*self.sigma**6./(r_ij**7.))
                         # Component forces
                         x_force_ij = force_ij_signed_magnitude*particle_component_ratio(self.positions_mat,0,i,j,self.length)
                         y_force_ij = force_ij_signed_magnitude*particle_component_ratio(self.positions_mat,1,i,j,self.length)
@@ -190,13 +196,13 @@ class MDEngine:
     # Calculate position and velocity changes
     def calculate_new_pos_velos(self):
         for i in range(self.num_particles):
-            r_plus_t_x = self.positions_mat[i,0]*2 - self.prev_pos_mat[i,0] + self.del_t**2*self.forces_mat[i,0]/self.masses_mat[i,0]
-            r_plus_t_y = self.positions_mat[i,1]*2 - self.prev_pos_mat[i,1] + self.del_t**2*self.forces_mat[i,1]/self.masses_mat[i,0]
-            r_plus_t_z = self.positions_mat[i,2]*2 - self.prev_pos_mat[i,2] + self.del_t**2*self.forces_mat[i,2]/self.masses_mat[i,0]
+            r_plus_t_x = self.positions_mat[i,0]*2 - self.prev_pos_mat[i,0] + self.del_t**2*self.forces_mat[i,0]/self.particle_mass
+            r_plus_t_y = self.positions_mat[i,1]*2 - self.prev_pos_mat[i,1] + self.del_t**2*self.forces_mat[i,1]/self.particle_mass
+            r_plus_t_z = self.positions_mat[i,2]*2 - self.prev_pos_mat[i,2] + self.del_t**2*self.forces_mat[i,2]/self.particle_mass
 
-            v_plus_t_x = (r_plus_t_x-self.prev_pos_mat[i,0])/(self.del_t*2)
-            v_plus_t_y = (r_plus_t_y-self.prev_pos_mat[i,1])/(self.del_t*2)
-            v_plus_t_z = (r_plus_t_z-self.prev_pos_mat[i,2])/(self.del_t*2)
+            v_plus_t_x = (r_plus_t_x-self.prev_pos_mat[i,0])/(2*self.del_t)
+            v_plus_t_y = (r_plus_t_y-self.prev_pos_mat[i,1])/(2*self.del_t)
+            v_plus_t_z = (r_plus_t_z-self.prev_pos_mat[i,2])/(2*self.del_t)
 
             r_current_x = self.positions_mat[i,0]
             r_current_y = self.positions_mat[i,1]
@@ -209,13 +215,13 @@ class MDEngine:
     # First time position and velocity changes
     def calculate_1st_new_pos_velos(self):
         for i in range(self.num_particles):
-            r_plus_t_x = self.positions_mat[i,0] + self.del_t*self.velocities_mat[i,0] + self.del_t**2*self.forces_mat[i,0]/(self.masses_mat[i,0]*2)
-            r_plus_t_y = self.positions_mat[i,1] + self.del_t*self.velocities_mat[i,1] + self.del_t**2*self.forces_mat[i,1]/(self.masses_mat[i,0]*2)
-            r_plus_t_z = self.positions_mat[i,2] + self.del_t*self.velocities_mat[i,2] + self.del_t**2*self.forces_mat[i,2]/(self.masses_mat[i,0]*2)
+            r_plus_t_x = self.positions_mat[i,0] + self.del_t*self.velocities_mat[i,0] + self.del_t**2./2.*self.forces_mat[i,0]/(self.particle_mass)
+            r_plus_t_y = self.positions_mat[i,1] + self.del_t*self.velocities_mat[i,1] + self.del_t**2./2.*self.forces_mat[i,1]/(self.particle_mass)
+            r_plus_t_z = self.positions_mat[i,2] + self.del_t*self.velocities_mat[i,2] + self.del_t**2./2.*self.forces_mat[i,2]/(self.particle_mass)
 
-            v_plus_t_x = self.velocities_mat[i,0]  + self.del_t*self.forces_mat[i,0]/(self.masses_mat[i,0])
-            v_plus_t_y = self.velocities_mat[i,1]  + self.del_t*self.forces_mat[i,1]/(self.masses_mat[i,0])
-            v_plus_t_z = self.velocities_mat[i,2]  + self.del_t*self.forces_mat[i,2]/(self.masses_mat[i,0])
+            v_plus_t_x = self.velocities_mat[i,0]  + self.del_t*self.forces_mat[i,0]/(self.particle_mass)
+            v_plus_t_y = self.velocities_mat[i,1]  + self.del_t*self.forces_mat[i,1]/(self.particle_mass)
+            v_plus_t_z = self.velocities_mat[i,2]  + self.del_t*self.forces_mat[i,2]/(self.particle_mass)
 
             #set_matrix_x_y_z(self.prev_pos_mat, i, self.positions_mat[i,0], self.positions_mat[i,1], self.positions_mat[i,2])
             set_matrix_x_y_z(self.positions_mat, i, r_plus_t_x, r_plus_t_y, r_plus_t_z)
@@ -223,11 +229,8 @@ class MDEngine:
 
     # Calculate total energies (should be pretty much the same every step)
     def calculate_total_energies(self):
-        total_kin_energy = 0
         total_pot_energy = 0
-
         for i in range(self.num_particles):
-            total_kin_energy += self.masses_mat[i,0]*(particle_velocity(self.velocities_mat,i)**2)/2
             for j in range(self.num_particles):
                 if(i != j):
                     r_ij = particles_distance(self.positions_mat,i,j,self.length)
@@ -235,9 +238,9 @@ class MDEngine:
                         pass
                     else:
                         total_pot_energy += 4*self.epsilon*((self.sigma/r_ij)**12 - (self.sigma/r_ij)**6)
-        self.total_kin_energy = total_kin_energy
+        self.total_kin_energy = find_kin_energy(self.velocities_mat, self.particle_mass)
         self.total_pot_energy = total_pot_energy
-        self.energy_per_particle = total_kin_energy/self.num_particles + total_pot_energy/self.num_particles
+        self.energy_per_particle = self.total_kin_energy/self.num_particles + self.total_pot_energy/self.num_particles
 
     # To drive engine for some number of time steps
     def drive_engine(self, steps):
@@ -245,8 +248,10 @@ class MDEngine:
             self.calculate_forces()
             self.calculate_new_pos_velos()
             self.calculate_total_energies()
-            # print(self.total_kin_energy)
-            # print(self.total_pot_energy)
+            print("kinetic")
+            print(self.total_kin_energy/self.num_particles)
+            print("potential")
+            print(self.total_pot_energy/self.num_particles)
             print(self.energy_per_particle)
 
             # for i in range(self.num_particles):
@@ -261,4 +266,4 @@ class MDEngine:
 
 
 my_engine = MDEngine()
-my_engine.drive_engine(5)
+my_engine.drive_engine(20)
