@@ -11,7 +11,7 @@ def normalize(mat):
     normed = np.true_divide(normed, std)
     normed[normed == np.inf] = 0
     normed = np.nan_to_num(normed)
-  return normed
+  return (normed, mean, std)
 
 def to_grayscale(recon, original):
   return np.multiply(recon, original.std(0)) + original.mean(0)

@@ -18,6 +18,11 @@ def gradient_descent(hyperparams, X, Y, learning_rate=None, epochs=200):
     gradient_funcs = get_gradient_funcs(params)
     log_prob = 1.0
 
+    training_cov = cartesian_operation(X, function=covariance_func)
+    training_cov_inv = inv(training_cov)
+    new_log_prob = calc_log_prob(X, Y, training_cov_inv, covariance_func)
+    print 'INITIAL LOG PROB', new_log_prob
+
     # for number of epochs
     for i in range(epochs):
         # generate inverse covariance matrix based on current hyperparameters
@@ -29,10 +34,10 @@ def gradient_descent(hyperparams, X, Y, learning_rate=None, epochs=200):
                 continue
             # compute gradient of log probability with respect to the parameter
             gradients[param_name] = gradient_log_prob(gradient_funcs[param_name], X, Y, training_cov_inv)
-            scale = 10.0 if param_name is not 'theta_amp' else 1000.0
-            print (learning_rate(i, scale) * gradients[param_name]), param_name
             # update each parameter according to learning rate and gradient
-            params[param_name] += (learning_rate(i, scale) * gradients[param_name])
+            step = learning_rate(i) * gradients[param_name]
+            print step, param_name
+            params[param_name] += step
         print 'params:'
         print { 'theta_amp': params['theta_amp'], 'theta_length': params['theta_length'] }
         print 'gradients:'
@@ -40,10 +45,7 @@ def gradient_descent(hyperparams, X, Y, learning_rate=None, epochs=200):
         print 'log_prob:'
         new_log_prob = calc_log_prob(X, Y, training_cov_inv, covariance_func)
         print new_log_prob
-        if abs(log_prob - new_log_prob) < 0.0001:
-            return (params, new_log_prob)
-        else:
-            log_prob = new_log_prob
+        log_prob = new_log_prob
     return (params, log_prob)
 
 def gradient_log_prob(gradient_func, X, Y, training_cov_inv):
@@ -61,7 +63,7 @@ def calc_log_prob(X, Y, training_cov_inv, covariance_func):
     term_2 = log(mag(cartesian_operation(X, function=covariance_func)))
     return -0.5 * (term_1 + term_2)
 
-def default_learning_rate(i, scale=10.0):
+def default_learning_rate(i, scale=0.01):
     if i < 100:
         return 1.0 * scale
     elif i < 140:
@@ -88,7 +90,7 @@ def initial_length_scales(X):
     length_scales[length_scales == np.inf] = 1.0
     return length_scales
 
-def optimize_hyperparams(params, X, Y, rand_restarts=30):
+def optimize_hyperparams(params, X, Y, rand_restarts=1):
     best_candidate = None
     for i in range(0, rand_restarts):
         new_params = generate_random_hyperparams(params)

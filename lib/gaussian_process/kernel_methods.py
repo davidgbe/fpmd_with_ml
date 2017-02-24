@@ -19,7 +19,7 @@ def default_covariance_func(x_1, x_2, hyperparams):
 # for varying the hyperparameters
 def covariance_mat_derivative_theta_length(x_1, x_2, hyperparams):
     l = hyperparams['theta_length']
-    return default_covariance_func(x_1, x_2, hyperparams) * covariance_exp_arg(x_1, x_2, hyperparams) / l**3.0
+    return default_covariance_func(x_1, x_2, hyperparams) * np.sqrt(covariance_exp_arg(x_1, x_2, hyperparams)) / l**3.0
 
 def covariance_mat_derivative_theta_amp(x_1, x_2, hyperparams):
     l = hyperparams['theta_length']

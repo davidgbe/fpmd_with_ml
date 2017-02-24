@@ -15,14 +15,14 @@ class MNISTTrainer:
     train_X = MNISTTrainer.load_images_dataset('../datasets/mnist/train-images-idx3-ubyte')
     train_Y = MNISTTrainer.load_labels('../datasets/mnist/train-labels-idx1-ubyte')
     if num_training_examples is not None:
-      train_X = train_X[:num_training_examples]
-      train_Y = train_Y[:num_training_examples]
+      (train_X, mean_train_X, std_train_X) = utilities.normalize(train_X[:num_training_examples])
+      (train_Y, mean_train_Y, std_train_Y) = utilities.normalize(train_Y[:num_training_examples])
 
     X = MNISTTrainer.load_images_dataset('../datasets/mnist/t10k-images-idx3-ubyte')
     Y = MNISTTrainer.load_labels('../datasets/mnist/t10k-labels-idx1-ubyte')
     if num_targets is not None:
-      X = X[:num_targets]
-      Y = Y[:num_targets]
+      (X, mean_X, std_X) = utilities.normalize(X[:num_targets])
+      (Y, mean_Y, std_Y) = utilities.normalize(Y[:num_targets])
 
     gp = GP()
 
@@ -30,7 +30,7 @@ class MNISTTrainer:
     gp.fit(train_X[:500], train_Y[:500])
 
     print 'Predicting...'
-    predictions = gp.predict(train_X, train_Y, X)
+    predictions = gp.predict(train_X, train_Y, X) * mean_Y + std_Y
     print predictions
     print Y
     #print classification_report(Y, predictions)
