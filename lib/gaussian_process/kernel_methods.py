@@ -4,18 +4,26 @@ from math import exp, ceil, sqrt
 from functools import partial
 from multiprocessing import Pool, cpu_count
 
-def distance(x_1, x_2):
-    return mag(x_1 - x_2)
+def squared_distance(v_1, v_2):
+    return np.square(v_1 - v_2)
+
+def covariance_exp_arg(x_1, x_2, hyperparams):
+    example_diff = x_1 - x_2
+    return np.square(example_diff).dot(np.square(hyperparams['length_scales']))
 
 def default_covariance_func(x_1, x_2, hyperparams):
-    return hyperparams['theta_amp']**2.0 * exp(-0.5 * (mag(x_1 - x_2) / hyperparams['theta_length'])**2.0)
+    a = hyperparams['theta_amp']**2.0
+    l = hyperparams['theta_length']
+    return a * exp(-0.5 * covariance_exp_arg(x_1, x_2, hyperparams) / l**2.0)
 
 # for varying the hyperparameters
 def covariance_mat_derivative_theta_length(x_1, x_2, hyperparams):
-    return default_covariance_func(x_1, x_2, hyperparams) * mag(x_1 - x_2)**2.0 / hyperparams['theta_length']**3.0
+    l = hyperparams['theta_length']
+    return default_covariance_func(x_1, x_2, hyperparams) * covariance_exp_arg(x_1, x_2, hyperparams) / l**3.0
 
 def covariance_mat_derivative_theta_amp(x_1, x_2, hyperparams):
-    return 2.0 * hyperparams['theta_amp'] * exp(-0.5 * (mag(x_1 - x_2) / hyperparams['theta_length'])**2.0)
+    l = hyperparams['theta_length']
+    return 2.0 * hyperparams['theta_amp'] * exp(-0.5 * covariance_exp_arg(x_1, x_2, hyperparams) / l**2.0)
 
 # applies function pairwise for two arrays
 def operation_on_chunk(chunk_1, chunk_2, function, func_input_size):
