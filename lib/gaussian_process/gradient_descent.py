@@ -35,6 +35,7 @@ def gradient_descent(hyperparams, X, Y, learning_rate=None, epochs=200):
             # compute gradient of log probability with respect to the parameter
             gradients[param_name] = gradient_log_prob(gradient_funcs[param_name], X, Y, training_cov_inv)
             # update each parameter according to learning rate and gradient
+            #scale = 0.1 if param_name is 'theta_amp' else 0.01
             step = learning_rate(i) * gradients[param_name]
             print step, param_name
             params[param_name] += step
@@ -64,9 +65,9 @@ def calc_log_prob(X, Y, training_cov_inv, covariance_func):
     return -0.5 * (term_1 + term_2)
 
 def default_learning_rate(i, scale=0.01):
-    if i < 100:
+    if i < 80:
         return 1.0 * scale
-    elif i < 140:
+    elif i < 120:
         return 0.5 * scale
     elif i < 170:
         return 0.01 * scale
@@ -86,8 +87,8 @@ def initial_length_scales(X):
     length_scales = np.ones(X_t.shape[0])
     for i in range(0, X_t.shape[0]):
         length_scales[i] = cartesian_operation(X_t[i].T, function=squared_distance).std()
+    length_scales[length_scales == 0.0] = 1.0
     length_scales = np.sqrt(np.reciprocal(length_scales))
-    length_scales[length_scales == np.inf] = 1.0
     return length_scales
 
 def optimize_hyperparams(params, X, Y, rand_restarts=1):
@@ -104,5 +105,3 @@ def optimize_hyperparams(params, X, Y, rand_restarts=1):
             continue
     # return the best set of params found
     return best_candidate[0]
-
-
