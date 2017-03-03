@@ -1,0 +1,6 @@
+#!/bin/bash
+
+source ./scripts/run
+source ./scripts/install
+
+python ./bin/mnist.py predict
