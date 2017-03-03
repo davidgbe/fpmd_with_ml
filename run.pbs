@@ -1,5 +1,5 @@
 #!/bin/bash
-cd fpml_with_ml
+cd fpmd_with_ml
 source ./scripts/run
 source ./scripts/install
 
