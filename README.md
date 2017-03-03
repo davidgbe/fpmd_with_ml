@@ -41,3 +41,14 @@
   To save the new dependency, run:
 
   ```./scripts/save_reqs```
+
+### Notes on how to set up on HPC
+
+  1. ```wget "https://bootstrap.pypa.io/get-pip.py"```
+  1. ```python --user get-pip.py```
+  1. Add to bash profile
+    ```
+    export PATH=$PATH:~/.local/bin
+    export PYTHONPATH=$PYTHONPATH:~
+    ```
+  1. Get running!
