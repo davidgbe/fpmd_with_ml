@@ -87,10 +87,10 @@ class MNISTTrainer:
     output_size = size / format_byte_size
     return struct.unpack('>'  + format * output_size, bytes_read)
 
-  @staticmethod
-  def save_images(images, rows, cols, prefix='img_'):
-    for i in range(images.shape[0]):
-      utilities.save_image(images[i].reshape(rows, cols), prefix + str(i))
+  # @staticmethod
+  # def save_images(images, rows, cols, prefix='img_'):
+  #   for i in range(images.shape[0]):
+  #     utilities.save_image(images[i].reshape(rows, cols), prefix + str(i))
 
   @staticmethod
   def convert_to_unsigned_int(char):
