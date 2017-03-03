@@ -37,10 +37,10 @@
   You can add dependences with:
 
   ```pip install <package-name>```
-
-  To save the new dependency, run:
-
-  ```./scripts/save_reqs```
+  
+  To save new dependencies, run:
+  
+  ```source ./scripts/save_reqs```
 
 ### Notes on how to set up on HPC
 
