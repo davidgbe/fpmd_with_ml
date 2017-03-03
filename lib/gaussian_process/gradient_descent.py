@@ -91,7 +91,7 @@ def initial_length_scales(X):
     length_scales = np.sqrt(np.reciprocal(length_scales))
     return length_scales
 
-def optimize_hyperparams(params, X, Y, rand_restarts=1):
+def optimize_hyperparams(params, X, Y, rand_restarts=10):
     best_candidate = None
     for i in range(0, rand_restarts):
         new_params = generate_random_hyperparams(params)
