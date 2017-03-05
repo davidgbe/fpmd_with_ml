@@ -68,8 +68,9 @@ def cartesian_operation(X_1, X_2=None, function=None, cores=None):
             chunk_j = flattened_2[ (cols * j) : ((cols * j) + iter_size_2) ]
             async_results.append(pool.apply_async(operation_on_chunk, (chunk_i, chunk_j, function, cols)))
 
+    pool.close()
+    pool.join()
     async_results = [ res.get() for res in async_results]
-    pool.terminate()
 
     chunks_num_1 = int(ceil(float(rows_1) / chunk_size_1))
     chunks_num_2 = int(ceil(float(rows_2) / chunk_size_2))
