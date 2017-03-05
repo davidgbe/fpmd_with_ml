@@ -102,6 +102,7 @@ def optimize_hyperparams(params, X, Y, rand_restarts=10):
                 best_candidate = candidate
         except np.linalg.linalg.LinAlgError as e:
             print 'An error occurred'
+            print e
             continue
     # return the best set of params found
     return best_candidate[0]
