@@ -2,7 +2,7 @@ import numpy as np
 from numpy.linalg import norm as mag
 from math import exp, ceil, sqrt
 from functools import partial
-from multiprocessing import Pool, cpu_count
+from multiprocessing import set_start_method, Pool, cpu_count
 
 def squared_distance(v_1, v_2):
     return np.square(v_1 - v_2)
@@ -60,6 +60,7 @@ def cartesian_operation(X_1, X_2=None, function=None, cores=None):
 
     async_results = []
 
+    set_start_method('forkserver')
     pool = Pool(cores)
 
     for i in range(0, rows_1, chunk_size_1):
