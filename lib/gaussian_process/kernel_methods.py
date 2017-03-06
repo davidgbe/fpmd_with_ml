@@ -31,6 +31,7 @@ def operation_on_chunk(chunk_1, chunk_2, function, func_input_size):
     for i in range(0, chunk_1.size, func_input_size):
         for j in range(0, chunk_2.size, func_input_size):
             transformed_mat[int(i/func_input_size), int(j/func_input_size)] = function(chunk_1[i:i+func_input_size], chunk_2[j:j+func_input_size])
+    print('')
     return transformed_mat
 
 # runs an operation iteratively for every pair selected from X_1 and X_2
@@ -60,7 +61,7 @@ def cartesian_operation(X_1, X_2=None, function=None, cores=None):
 
     async_results = []
 
-    context = mp.get_context('spawn')
+    context = mp.get_context('fork')
     pool = context.Pool(cores)
 
     for i in range(0, rows_1, chunk_size_1):
@@ -70,7 +71,6 @@ def cartesian_operation(X_1, X_2=None, function=None, cores=None):
             async_results.append(pool.apply_async(operation_on_chunk, (chunk_i, chunk_j, function, cols)))
 
     pool.close()
-    pool.join()
     async_results = [ res.get() for res in async_results]
 
     chunks_num_1 = int(ceil(float(rows_1) / chunk_size_1))

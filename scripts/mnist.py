@@ -100,4 +100,4 @@ if __name__ == '__main__':
   if len(sys.argv) > 1:
     command = sys.argv[1]
     if command == 'predict':
-      MNISTTrainer.gaussian_process_predict(num_training_examples=500, num_targets=50)
+      MNISTTrainer.gaussian_process_predict(num_training_examples=100, num_targets=50)
