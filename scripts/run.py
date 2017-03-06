@@ -7,12 +7,12 @@ def func(x, y):
 
 X = np.array([[1, 2], [3, 4], [5, 6], [7, 8]])
 
-print X.shape
-print multiprocessing.cpu_count()
+print(X.shape)
+print(multiprocessing.cpu_count())
 
 mat = cartesian_operation(X, function=func)
-print mat
-print mat.shape
+print(mat)
+print(mat.shape)
 Y = np.array([1, 3, 5])
 
 target = np.array([[1, 2], [1, 3], [3, 5]])

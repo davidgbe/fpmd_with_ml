@@ -2,7 +2,7 @@ import numpy as np
 from numpy.linalg import norm as mag
 from math import exp, ceil, sqrt
 from functools import partial
-from multiprocessing import set_start_method, Pool, cpu_count
+from multiprocessing import Pool, cpu_count
 
 def squared_distance(v_1, v_2):
     return np.square(v_1 - v_2)
@@ -27,10 +27,10 @@ def covariance_mat_derivative_theta_amp(x_1, x_2, hyperparams):
 
 # applies function pairwise for two arrays
 def operation_on_chunk(chunk_1, chunk_2, function, func_input_size):
-    transformed_mat = np.zeros((chunk_1.size/func_input_size, chunk_2.size/func_input_size))
+    transformed_mat = np.zeros((int(chunk_1.size/func_input_size), int(chunk_2.size/func_input_size)))
     for i in range(0, chunk_1.size, func_input_size):
         for j in range(0, chunk_2.size, func_input_size):
-            transformed_mat[i/func_input_size, j/func_input_size] = function(chunk_1[i:i+func_input_size], chunk_2[j:j+func_input_size])
+            transformed_mat[int(i/func_input_size), int(j/func_input_size)] = function(chunk_1[i:i+func_input_size], chunk_2[j:j+func_input_size])
     return transformed_mat
 
 # runs an operation iteratively for every pair selected from X_1 and X_2
@@ -60,7 +60,6 @@ def cartesian_operation(X_1, X_2=None, function=None, cores=None):
 
     async_results = []
 
-    set_start_method('forkserver')
     pool = Pool(cores)
 
     for i in range(0, rows_1, chunk_size_1):

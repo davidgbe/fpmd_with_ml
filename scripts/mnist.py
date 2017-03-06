@@ -26,22 +26,22 @@ class MNISTTrainer:
 
     gp = GP()
 
-    print 'Training...'
+    print('Training...')
     gp.fit(train_X, train_Y)
 
-    print 'Predicting...'
+    print('Predicting...')
     predictions = gp.predict(train_X, train_Y, X)
     # print predictions
-    print std_Y * predictions + mean_Y
-    print std_Y * Y + mean_Y
+    print(std_Y * predictions + mean_Y)
+    print(std_Y * Y + mean_Y)
     #print classification_report(Y, predictions)
 
   @staticmethod
   def load_labels(rel_path):
-    print 'Loading labels...'
+    print('Loading labels...')
     start = time.time()
 
-    labels_file = open(utilities.file_path(__file__, rel_path), 'r+')
+    labels_file = open(utilities.file_path(__file__, rel_path), 'rb')
 
     (mag, num_examples) = MNISTTrainer.read(labels_file, 8, 'i', 4)
     labels = MNISTTrainer.read_bytes(labels_file, num_examples)
@@ -50,27 +50,27 @@ class MNISTTrainer:
     labels = vec_func(np.array(labels))
 
     end = time.time()
-    print 'Finished loading labels in %d s' % (end - start)
+    print('Finished loading labels in %d s' % (end - start))
     return labels
 
   @staticmethod
   def load_images_dataset(rel_path):
-    print 'Loading image dataset...'
+    print('Loading image dataset...')
     start = time.time()
 
-    images_file = open(utilities.file_path(__file__, rel_path), 'r+')
+    images_file = open(utilities.file_path(__file__, rel_path), 'rb')
     (mag, num_examples, rows, cols) = MNISTTrainer.read(images_file, 16, 'i', 4)
 
-    print 'Number of examples: %d' % num_examples
-    print 'Rows of pixels per image: %d' % rows
-    print 'Columns of pixels per image: %d' % cols
+    print('Number of examples: %d' % num_examples)
+    print('Rows of pixels per image: %d' % rows)
+    print('Columns of pixels per image: %d' % cols)
 
     raw_images = MNISTTrainer.read_bytes(images_file, num_examples * rows * cols)
     vec_func = np.vectorize(MNISTTrainer.convert_to_unsigned_int)
-    raw_images = np.mat([ vec_func(np.array(raw_images[i:i + rows * cols])) for i in xrange(0, len(raw_images), rows * cols) ])
+    raw_images = np.mat([ vec_func(np.array(raw_images[i:i + rows * cols])) for i in range(0, len(raw_images), rows * cols) ])
 
     end = time.time()
-    print 'Images loaded in %d s' % (end - start)
+    print('Images loaded in %d s' % (end - start))
     return raw_images
 
   @staticmethod
@@ -83,8 +83,8 @@ class MNISTTrainer:
 
   @staticmethod
   def read(file, size, format, format_byte_size):
-    bytes_read = file.read(size)
-    output_size = size / format_byte_size
+    bytes_read = bytes(file.read(size))
+    output_size = int(size / format_byte_size)
     return struct.unpack('>'  + format * output_size, bytes_read)
 
   # @staticmethod
@@ -94,10 +94,10 @@ class MNISTTrainer:
 
   @staticmethod
   def convert_to_unsigned_int(char):
-    return 0 if char == '' else ord(char)
+    return 0 if char == b'' else ord(char)
 
 if __name__ == '__main__':
   if len(sys.argv) > 1:
     command = sys.argv[1]
     if command == 'predict':
-      MNISTTrainer.gaussian_process_predict(num_training_examples=5000, num_targets=50)
+      MNISTTrainer.gaussian_process_predict(num_training_examples=500, num_targets=50)
