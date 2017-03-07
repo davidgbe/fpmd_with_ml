@@ -1,6 +1,6 @@
 #!/bin/bash
 cd fpmd_with_ml
-source ./scripts/run
-source ./scripts/install
+source fpmd_run
+source fpmd_install
 
-python ./bin/mnist.py predict
+python3 ./scripts/mnist.py predict
