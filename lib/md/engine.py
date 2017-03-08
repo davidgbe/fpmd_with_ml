@@ -27,96 +27,119 @@ def add_matrix_x_y_z(matrix, index, x_val, y_val, z_val):
 ## Engine specific ##
 
 # To get a normal (Gaussian) distibution of random numbers
+# Based on "basic form" listed here: https://en.wikipedia.org/wiki/Box%E2%80%93Muller_transform
 def rand_box_muller():
     u1 = random()
     u2 = random()
-    t = np.sqrt((-2.) * np.log(u1))
-    v = 2. * np.pi * u2
-    return t * np.cos(v)
+    r = np.sqrt((-2.)*np.log(u1))
+    t = 2.*np.pi*u2
+    return r*np.cos(t)
 
 # To get the magnitude of the distance between two particles
-def particles_distance(positions_mat, particle1, particle2, length):
+def particles_distance(positions_mat, particle1, particle2, L_star):
     x_diff = np.abs(positions_mat[particle1,0]-positions_mat[particle2,0])
-    x_diff = np.where(x_diff < 0.5*length, x_diff, length-x_diff)
+    x_diff = np.where(x_diff < 0.5*L_star, x_diff, L_star-x_diff)
     
     y_diff = np.abs(positions_mat[particle1,1]-positions_mat[particle2,1])
-    y_diff = np.where(y_diff < 0.5*length, y_diff, length-y_diff)
+    y_diff = np.where(y_diff < 0.5*L_star, y_diff, L_star-y_diff)
     
     z_diff = np.abs(positions_mat[particle1,2]-positions_mat[particle2,2])
-    z_diff = np.where(z_diff < 0.5*length, z_diff, length-z_diff)
+    z_diff = np.where(z_diff < 0.5*L_star, z_diff, L_star-z_diff)
     
     return np.sqrt(x_diff**2. + y_diff**2. + z_diff**2.)
 
-# To get x, y, or z component of distance between two particles, over the magnitude of their total distance
-def particle_component_ratio(positions_mat, component, particle1, particle2, length):
-    total_distance = particles_distance(positions_mat, particle1, particle2, length)
+# To get x, y, or z component of distance between two particles, over the magnitude of their total distance (signed)
+def particle_component_ratio(positions_mat, component, particle1, particle2, L_star):
+    total_distance = particles_distance(positions_mat, particle1, particle2, L_star)
     component_distance = positions_mat[particle1,component]-positions_mat[particle2,component]
     
-    if(component_distance > 0.5*length):
-        component_distance = component_distance - length
-    elif (component_distance < -0.5*length):
-        component_distance = component_distance + length
+    if(component_distance > 0.5*L_star):
+        component_distance -= L_star
+    elif (component_distance < -0.5*L_star):
+        component_distance += L_star
     if(total_distance == 0):
         return 0
     
     return component_distance/total_distance
 
 # To get the total kinetic energy
-def find_kin_energy(velocities_mat, particle_mass):
-    return 0.5*particle_mass*np.sum([ mag(velocities_mat[i])**2. for i in range(velocities_mat.shape[0]) ])
+def find_kin_energy(tau_velo_mat):
+    return 0.5*np.sum([ mag(tau_velo_mat[i])**2. for i in range(tau_velo_mat.shape[0]) ])
 
-#To figure out if the particle is on the corner of a cube
-def on_corner(positions_mat, particle_num):
-    x = positions_mat[particle_num,0]
-    y = positions_mat[particle_num,1]
-    z = positions_mat[particle_num,2]
-    if(x%0.2 == 0 and y%0.2 == 0 and z%0.2 == 0):
-        return True
-    return False   
+# To find a particle's correct component position in-case boundary conditions require it
+def position_fix(component_position, L_star):
+    if(component_position > L_star):
+        component_position -= L_star
+    elif(component_position < 0):
+        component_position += L_star
+    return component_position
+
+# To get the distance between two particles in a single component, considering boundary conditions
+def boundary_cond_dist(position1, position2, L_star):
+    distance = position1-position2
+    if(distance > 0.5*L_star):
+        distance -= L_star
+    elif (distance < -0.5*L_star):
+        distance += L_star
+    return distance
 
 # The engine!
 class MDEngine:
     # Initialization
-    def __init__(self, temp=120., num_particles=500, length=1.*10**(-9), position_file=None):
+    def __init__(self, out_file_name = None):
 
-        ## Constants/values for this engine ##
-        self.tau_0 = 10.**-13
-        self.k_b = 1.38064852*(10**(-23))
-        self.temp = temp
-        self.num_particles = num_particles
-        self.length = length
-        self.epsilon = self.temp*self.k_b
-        self.omega = self.length**3.
-        self.r_0 = (self.omega*3./(4.*np.pi*self.num_particles))**(1./3.)
-        self.sigma = (0.8*self.omega/self.num_particles)**(1./3.)
-        self.r_c = 2.5*self.sigma
-        self.particle_mass = (self.tau_0**2.)*self.epsilon/(self.r_0**2.)
-        self.del_t = self.tau_0*(10**-2.)
+        self.num_particles = 256                                            # Number of particles (should go back to 500, 256 right now as
+                                                                               # numbers seem to come out the same and it's way faster)
+        self.T_star = 1.                                                    # Dimensionless Temperature
+        self.rho_star = 0.8                                                 # Dimensionless particle number density
+        self.L_star = (self.num_particles/self.rho_star)**(1./3)            # Dimensionless length of lattice
+        self.r_c_star = 2.5                                                 # Dimensionless cut off length
+        self.del_t = 0.01                                                   # Dimensionless time
 
-        if position_file is None:
-            # generate positions
-            self.generate_positions()
-        else:
-            # get positions from position file
-            pass
-        self.generate_velocities()
+        # Open file for energies to be written to
+        self.has_ofile = 0
+        if(out_file_name != None):
+            self.has_ofile = 1
+            self.ofile = open(out_file_name, 'w')
 
+        # Generate matrices to get started
+        self.generate_positions()
+        self.generate_tau_velos()
+
+        # Calculate and print initial values
         self.calculate_total_energies()
-        print "kinetic", self.total_kin_energy/self.num_particles
-        print "potential", self.total_pot_energy/self.num_particles
-        print "total energy", self.energy_per_particle
+        if(self.has_ofile):
+            self.ofile.write(str(self.total_kin_energy/self.num_particles))
+            self.ofile.write(",")
+            self.ofile.write(str(self.total_pot_energy/self.num_particles))
+            self.ofile.write(",")
+            self.ofile.write(str(self.energy_per_particle))
+            self.ofile.write(",")
+            self.ofile.write(str((2./3)*find_kin_energy(self.tau_velo_mat)/(self.num_particles)))
+            self.ofile.write("\n")
 
-        self.calculate_forces()
+
+        # Do first step, which is done differently due to not having position history
+        self.calculate_tau_accels()
         self.calculate_1st_new_pos_velos()
+        # Fix the tau_velos for current temperature
+        self.fix_tau_velos()
         self.calculate_total_energies()
-        print "kinetic", self.total_kin_energy/self.num_particles
-        print "potential", self.total_pot_energy/self.num_particles
-        print "total energy", self.energy_per_particle
+        if(self.has_ofile):
+            self.ofile.write(str(self.total_kin_energy/self.num_particles))
+            self.ofile.write(",")
+            self.ofile.write(str(self.total_pot_energy/self.num_particles))
+            self.ofile.write(",")
+            self.ofile.write(str(self.energy_per_particle))
+            self.ofile.write(",")
+            self.ofile.write(str((2./3)*find_kin_energy(self.tau_velo_mat)/(self.num_particles)))
+            self.ofile.write("\n")
+
 
     # Generate face centered cubic positions for particles
     def generate_positions(self):
         num_cells_per_edge = int(round((self.num_particles/4.)**(1./3.)))
-        cell_length = self.length/(num_cells_per_edge)
+        cell_length = self.L_star/(num_cells_per_edge)
         positions_mat = np.zeros((self.num_particles, 3))
         #orig_pos_mat = np.zeros((self.num_particles, 3))
         prev_pos_mat = np.zeros((self.num_particles, 3))
@@ -154,103 +177,133 @@ class MDEngine:
         #self.orig_pos_mat = orig_pos_mat
         self.prev_pos_mat = prev_pos_mat
 
-    # Generate random velocities for each particle, and fix such that total temperature is correct
-    def generate_velocities(self):
-        velocities_mat = np.zeros((self.num_particles, 3))
+    # Fix the tau_velos so they still correspond to the T_star temperature
+    def fix_tau_velos(self):
+        # Find the temperature that these tau_velos correspond to, and the needed fix
+        T_star_prime = (2./3)*find_kin_energy(self.tau_velo_mat)/(self.num_particles)
+        tau_velo_fix = np.sqrt(self.T_star/T_star_prime)
+
+        # Fix the tau_velos so they now lead to a temperature of T_star
         for i in range(self.num_particles):
             for j in range(3):
-                velocities_mat[i,j] = rand_box_muller()
+                self.tau_velo_mat[i,j] = self.tau_velo_mat[i,j]*tau_velo_fix
 
-        total_kin_energy = find_kin_energy(velocities_mat, self.particle_mass)
-
-        temp_prime = (2./3.)*total_kin_energy/(self.num_particles*self.k_b)
-        velocity_fix = np.sqrt(self.temp/temp_prime)
-
+    # Generate random "tau_velo" (tau times velocity vector) for each particle, and fix such that total temperature is correct
+    def generate_tau_velos(self):
+        # Set up matrix of randomized tau_velos in x, y, and z direction
+        self.tau_velo_mat = np.zeros((self.num_particles, 3))
         for i in range(self.num_particles):
             for j in range(3):
-                velocities_mat[i,j] = velocities_mat[i,j]*velocity_fix
+                self.tau_velo_mat[i,j] = rand_box_muller()
 
-        self.velocities_mat = velocities_mat
+        # Fix the tau_velos for current temperature
+        self.fix_tau_velos()
 
 
-    # Calculate the potential energy of each particle, and through this the force on that particle
-    def calculate_forces(self):
-        forces_mat = np.zeros((self.num_particles, 3))
+    # Calculate the "tau_accel" on each particle, that is tau^2 times the acceleration vector
+    def calculate_tau_accels(self):
+        # Matrix of components of tau^2 times acceleration
+        tau_accel_mat = np.zeros((self.num_particles, 3))
 
+        # For each particle, find the total "tau_accel" of all other particles on it
         for i in range(self.num_particles):
             for j in range(self.num_particles):
                 if(i != j):
-                    r_ij = particles_distance(self.positions_mat,i,j,self.length)
-                    if(r_ij > self.r_c):
+                    r_ij = particles_distance(self.positions_mat,i,j,self.L_star)
+                    if(r_ij > self.r_c_star):
                         pass
                     else:
-                        force_ij_signed_magnitude = -4.*self.epsilon*(-12.*self.sigma**12./(r_ij**13.) + 6.*self.sigma**6./(r_ij**7.))
-                        # Component forces
-                        x_force_ij = force_ij_signed_magnitude*particle_component_ratio(self.positions_mat,0,i,j,self.length)
-                        y_force_ij = force_ij_signed_magnitude*particle_component_ratio(self.positions_mat,1,i,j,self.length)
-                        z_force_ij = force_ij_signed_magnitude*particle_component_ratio(self.positions_mat,2,i,j,self.length)
-                        add_matrix_x_y_z(forces_mat, i, x_force_ij, y_force_ij, z_force_ij)
+                        tau_accel_ij_magnitude = 12. * (1./r_ij**6.) * ((1./r_ij**6.) - 0.5)
+                        # Find signed component "tau_accels"
+                        x_tau_accel_ij = tau_accel_ij_magnitude*particle_component_ratio(self.positions_mat,0,i,j,self.L_star)
+                        y_tau_accel_ij = tau_accel_ij_magnitude*particle_component_ratio(self.positions_mat,1,i,j,self.L_star)
+                        z_tau_accel_ij = tau_accel_ij_magnitude*particle_component_ratio(self.positions_mat,2,i,j,self.L_star)
+                        add_matrix_x_y_z(tau_accel_mat, i, x_tau_accel_ij, y_tau_accel_ij, z_tau_accel_ij)
 
-        self.forces_mat = forces_mat
+        self.tau_accel_mat = tau_accel_mat
 
     # Calculate position and velocity changes
     def calculate_new_pos_velos(self):
         for i in range(self.num_particles):
-            r_plus_t_x = 2.*self.positions_mat[i,0] - self.prev_pos_mat[i,0] + self.del_t**2*self.forces_mat[i,0]/self.particle_mass
-            r_plus_t_y = 2.*self.positions_mat[i,1] - self.prev_pos_mat[i,1] + self.del_t**2*self.forces_mat[i,1]/self.particle_mass
-            r_plus_t_z = 2.*self.positions_mat[i,2] - self.prev_pos_mat[i,2] + self.del_t**2*self.forces_mat[i,2]/self.particle_mass
+            # Find new positions
+            r_plus_t_x = 2.*self.positions_mat[i,0] - self.prev_pos_mat[i,0] + self.del_t**2*self.tau_accel_mat[i,0]
+            r_plus_t_y = 2.*self.positions_mat[i,1] - self.prev_pos_mat[i,1] + self.del_t**2*self.tau_accel_mat[i,1]
+            r_plus_t_z = 2.*self.positions_mat[i,2] - self.prev_pos_mat[i,2] + self.del_t**2*self.tau_accel_mat[i,2]
 
-            v_plus_t_x = (r_plus_t_x-self.prev_pos_mat[i,0])/(2.*self.del_t)
-            v_plus_t_y = (r_plus_t_y-self.prev_pos_mat[i,1])/(2.*self.del_t)
-            v_plus_t_z = (r_plus_t_z-self.prev_pos_mat[i,2])/(2.*self.del_t)
+            # Check for fixes needed on new positions
+            r_plus_t_x = position_fix(r_plus_t_x, self.L_star)
+            r_plus_t_y = position_fix(r_plus_t_y, self.L_star)
+            r_plus_t_z = position_fix(r_plus_t_z, self.L_star)
 
+            # Find new tau_velos
+            v_plus_t_x = boundary_cond_dist(r_plus_t_x, self.prev_pos_mat[i,0], self.L_star)/(2.*self.del_t)
+            v_plus_t_y = boundary_cond_dist(r_plus_t_y, self.prev_pos_mat[i,1], self.L_star)/(2.*self.del_t)
+            v_plus_t_z = boundary_cond_dist(r_plus_t_z, self.prev_pos_mat[i,2], self.L_star)/(2.*self.del_t)
+
+            # Prepare for setting previous positions
             r_current_x = self.positions_mat[i,0]
             r_current_y = self.positions_mat[i,1]
             r_current_z = self.positions_mat[i,2]
 
             set_matrix_x_y_z(self.prev_pos_mat, i, r_current_x, r_current_y, r_current_z)
             set_matrix_x_y_z(self.positions_mat, i, r_plus_t_x, r_plus_t_y, r_plus_t_z)
-            set_matrix_x_y_z(self.velocities_mat, i, v_plus_t_x, v_plus_t_y, v_plus_t_z)
+            set_matrix_x_y_z(self.tau_velo_mat, i, v_plus_t_x, v_plus_t_y, v_plus_t_z)
 
     # First time position and velocity changes
     def calculate_1st_new_pos_velos(self):
         for i in range(self.num_particles):
-            r_plus_t_x = self.positions_mat[i,0] + self.del_t*self.velocities_mat[i,0] + self.del_t**2./2.*self.forces_mat[i,0]/(self.particle_mass)
-            r_plus_t_y = self.positions_mat[i,1] + self.del_t*self.velocities_mat[i,1] + self.del_t**2./2.*self.forces_mat[i,1]/(self.particle_mass)
-            r_plus_t_z = self.positions_mat[i,2] + self.del_t*self.velocities_mat[i,2] + self.del_t**2./2.*self.forces_mat[i,2]/(self.particle_mass)
+            # Find new positions
+            r_plus_t_x = self.positions_mat[i,0] + self.del_t*self.tau_velo_mat[i,0] + self.del_t**2./2.*self.tau_accel_mat[i,0]
+            r_plus_t_y = self.positions_mat[i,1] + self.del_t*self.tau_velo_mat[i,1] + self.del_t**2./2.*self.tau_accel_mat[i,1]
+            r_plus_t_z = self.positions_mat[i,2] + self.del_t*self.tau_velo_mat[i,2] + self.del_t**2./2.*self.tau_accel_mat[i,2]
 
-            v_plus_t_x = self.velocities_mat[i,0]  + self.del_t*self.forces_mat[i,0]/(self.particle_mass)
-            v_plus_t_y = self.velocities_mat[i,1]  + self.del_t*self.forces_mat[i,1]/(self.particle_mass)
-            v_plus_t_z = self.velocities_mat[i,2]  + self.del_t*self.forces_mat[i,2]/(self.particle_mass)
+            # Check for fixes needed on new positions
+            r_plus_t_x = position_fix(r_plus_t_x, self.L_star)
+            r_plus_t_y = position_fix(r_plus_t_y, self.L_star)
+            r_plus_t_z = position_fix(r_plus_t_z, self.L_star)
 
-            #set_matrix_x_y_z(self.prev_pos_mat, i, self.positions_mat[i,0], self.positions_mat[i,1], self.positions_mat[i,2])
+            # Find new tau_velos
+            v_plus_t_x = self.tau_velo_mat[i,0]  + self.del_t*self.tau_accel_mat[i,0]
+            v_plus_t_y = self.tau_velo_mat[i,1]  + self.del_t*self.tau_accel_mat[i,1]
+            v_plus_t_z = self.tau_velo_mat[i,2]  + self.del_t*self.tau_accel_mat[i,2]
+
             set_matrix_x_y_z(self.positions_mat, i, r_plus_t_x, r_plus_t_y, r_plus_t_z)
-            set_matrix_x_y_z(self.velocities_mat, i, v_plus_t_x, v_plus_t_y, v_plus_t_z)
+            set_matrix_x_y_z(self.tau_velo_mat, i, v_plus_t_x, v_plus_t_y, v_plus_t_z)
 
-    # Calculate total energies (should be pretty much the same every step)
+    # Calculate total energies (total energy should be pretty much the same every step)
     def calculate_total_energies(self):
         total_pot_energy = 0
         for i in range(self.num_particles):
             for j in range(self.num_particles):
                 if(i != j):
-                    r_ij = particles_distance(self.positions_mat,i,j,self.length)
-                    if(r_ij > self.r_c):
+                    r_ij = particles_distance(self.positions_mat,i,j,self.L_star)
+                    if(r_ij > self.r_c_star):
                         pass
                     else:
-                        total_pot_energy += 4.*self.epsilon*((self.sigma/r_ij)**12. - (self.sigma/r_ij)**6.)
-        self.total_kin_energy = find_kin_energy(self.velocities_mat, self.particle_mass)
+                        total_pot_energy += 0.5 * ((1./r_ij)**12. - (1./r_ij)**6.)
+        self.total_kin_energy = find_kin_energy(self.tau_velo_mat)
         self.total_pot_energy = total_pot_energy
         self.energy_per_particle = self.total_kin_energy/self.num_particles + self.total_pot_energy/self.num_particles
 
     # To drive engine for some number of time steps
     def drive_engine(self, steps):
         for i in range(steps):
-            self.calculate_forces()
+            self.calculate_tau_accels()
             self.calculate_new_pos_velos()
+            if(i<500):
+                # Fix the tau_velos for current temperature
+                self.fix_tau_velos()
             self.calculate_total_energies()
-            print "kinetic", self.total_kin_energy/self.num_particles
-            print "potential", self.total_pot_energy/self.num_particles
-            print "total energy", self.energy_per_particle
+            if(self.has_ofile):
+                self.ofile.write(str(self.total_kin_energy/self.num_particles))
+                self.ofile.write(",")
+                self.ofile.write(str(self.total_pot_energy/self.num_particles))
+                self.ofile.write(",")
+                self.ofile.write(str(self.energy_per_particle))
+                self.ofile.write(",")
+                self.ofile.write(str((2./3)*find_kin_energy(self.tau_velo_mat)/(self.num_particles)))
+                self.ofile.write("\n")
 
-my_engine = MDEngine()
-my_engine.drive_engine(20)
+# Actual running of program
+my_engine = MDEngine("../test.csv")
+my_engine.drive_engine(5000)
