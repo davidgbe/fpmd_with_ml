@@ -18,7 +18,7 @@ def gradient_descent(hyperparams, X, Y, learning_rate=None, epochs=200, cached_p
     gradient_funcs = get_gradient_funcs(params)
     log_prob = 1.0
 
-    training_cov = cartesian_operation(X, function=covariance_func)
+    training_cov = cartesian_operation(X, function=covariance_func, cached_pool=cached_pool)
     training_cov_inv = inv(training_cov)
     new_log_prob = calc_log_prob(X, Y, training_cov_inv, covariance_func, cached_pool=cached_pool)
     print('INITIAL LOG PROB', new_log_prob)
