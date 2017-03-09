@@ -5,6 +5,7 @@ import multiprocessing as mp
 
 def create_pool(cores=None):
     cores = mp.cpu_count() if cores is None else cores
+    print('creating %i threads' % cores)
     return mp.get_context('spawn').Pool(cores)
 
 def normalize(mat):
