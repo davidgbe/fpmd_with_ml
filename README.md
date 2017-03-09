@@ -8,21 +8,17 @@
 
   Follow the instuctions found [here](https://pip.pypa.io/en/stable/installing/).
 
-1. Install Virtualenv
-
-  ```pip install virtualenv```
-
 1. Initiate virtual environment
 
-  ```virtualenv venv```
+  ```python3 -m venv .```
 
 1. Take ownership of start and install scripts
 
-  ```chmod u+x scripts/*```
+  ```chmod u+x user/bin/*```
 
 ### Starting the virtualenv
 
-  ```source ./scripts/run``` will start the virtualenv
+  ```source fpmd_run``` will start the virtualenv
 
   ```deactivate``` will terminate the session
 
@@ -30,7 +26,7 @@
 
   With the virtualenv running, do:
 
-  ```source ./scripts/install```
+  ```fpmd_install```
 
 ### Adding dependencies
 
@@ -40,7 +36,7 @@
   
   To save new dependencies, run:
   
-  ```source ./scripts/save_reqs```
+  ```source fpmd_save_reqs```
 
 ### Notes on how to set up on HPC
 
@@ -48,7 +44,9 @@
   1. ```python --user get-pip.py```
   1. Add to bash profile
     ```
-    export PATH=$PATH:~/.local/bin
+    export PATH=$PATH:/usr/usc/python/default/bin
+    export PATH=$PATH:~/fpmd_with_ml/user/bin
+    export PATH=$PATH:~/lib/python3.5/site-packages
     export PYTHONPATH=$PYTHONPATH:~
     ```
   1. Get running!
