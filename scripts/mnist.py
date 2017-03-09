@@ -3,7 +3,6 @@ import struct
 import numpy as np
 import time
 import sys
-from sklearn.metrics import classification_report
 from lib.gaussian_process.model import GaussianProcess as GP
 from lib.gaussian_process import utilities
 from numpy.linalg import inv, norm as mag
@@ -35,7 +34,6 @@ class MNISTTrainer:
     print(predictions)
     print(std_Y * predictions + mean_Y)
     print(std_Y * Y + mean_Y)
-    #print classification_report(Y, predictions)
 
   @staticmethod
   def load_labels(rel_path):
