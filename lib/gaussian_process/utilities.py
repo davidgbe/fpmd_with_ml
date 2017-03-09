@@ -1,6 +1,11 @@
 import numpy as np
 import os
+import multiprocessing as mp
 # import matplotlib.pyplot as plt
+
+def create_pool(cores=None):
+    cores = mp.cpu_count() if cores is None else cores
+    return mp.get_context('spawn').Pool(cores)
 
 def normalize(mat):
     mean = mat.mean(0)

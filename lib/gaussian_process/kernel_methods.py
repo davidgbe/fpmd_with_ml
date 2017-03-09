@@ -2,6 +2,7 @@ import numpy as np
 from numpy.linalg import norm as mag
 from math import exp, ceil, sqrt
 from functools import partial
+from .utilities import create_pool
 import multiprocessing as mp
 
 def squared_distance(v_1, v_2):
@@ -35,8 +36,10 @@ def operation_on_chunk(chunk_1, chunk_2, function, func_input_size):
 
 # runs an operation iteratively for every pair selected from X_1 and X_2
 # distributes work across cores provided
-def cartesian_operation(X_1, X_2=None, function=None, cores=None):
+def cartesian_operation(X_1, X_2=None, function=None, cores=None, cached_pool=None):
+    pool = cached_pool
     cores = mp.cpu_count() if cores is None else cores
+    pool = create_pool(cores) if pool is None else pool
     # must change this to be a parametrized func
     function = default_covariance_func if (function is None) else function
     if X_2 is None:
@@ -60,16 +63,14 @@ def cartesian_operation(X_1, X_2=None, function=None, cores=None):
 
     async_results = []
 
-    context = mp.get_context('forkserver')
-    pool = context.Pool(cores)
-
     for i in range(0, rows_1, chunk_size_1):
         for j in range(0, rows_2, chunk_size_2):
             chunk_i = flattened_1[ (cols * i) : ((cols * i) + iter_size_1) ]
             chunk_j = flattened_2[ (cols * j) : ((cols * j) + iter_size_2) ]
             async_results.append(pool.apply_async(operation_on_chunk, (chunk_i, chunk_j, function, cols)))
 
-    pool.close()
+    if cached_pool is None:
+        pool.close()
     async_results = [ res.get() for res in async_results]
 
     chunks_num_1 = int(ceil(float(rows_1) / chunk_size_1))

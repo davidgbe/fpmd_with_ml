@@ -9,7 +9,7 @@ from functools import partial
 class GaussianProcess:
     def __init__(self, covariance_func=None):
         self.covariance_func = default_covariance_func if covariance_func is None else covariance_func
-        self.hyperparams = {'theta_amp': 21.50849227766561, 'theta_length': -0.1684854547121318}
+        self.hyperparams = {'theta_amp': 1.0, 'theta_length': 1.0 }
         self.covariance_func = partial(self.covariance_func, hyperparams=self.hyperparams)
 
     def single_predict(self, target_x, training_cov_inv, Y_t, X):

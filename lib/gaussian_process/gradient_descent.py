@@ -6,8 +6,9 @@ from .kernel_methods import cartesian_operation, default_covariance_func, get_gr
 from functools import partial
 from copy import deepcopy
 from random import random
+from .utilities import create_pool
 
-def gradient_descent(hyperparams, X, Y, learning_rate=None, epochs=200):
+def gradient_descent(hyperparams, X, Y, learning_rate=None, epochs=200, cached_pool=None):
     learning_rate = default_learning_rate if learning_rate is None else learning_rate
 
     gradients = deepcopy(hyperparams)
@@ -19,20 +20,20 @@ def gradient_descent(hyperparams, X, Y, learning_rate=None, epochs=200):
 
     training_cov = cartesian_operation(X, function=covariance_func)
     training_cov_inv = inv(training_cov)
-    new_log_prob = calc_log_prob(X, Y, training_cov_inv, covariance_func)
+    new_log_prob = calc_log_prob(X, Y, training_cov_inv, covariance_func, cached_pool=cached_pool)
     print('INITIAL LOG PROB', new_log_prob)
 
     # for number of epochs
     for i in range(epochs):
         # generate inverse covariance matrix based on current hyperparameters
-        training_cov = cartesian_operation(X, function=covariance_func)
+        training_cov = cartesian_operation(X, function=covariance_func, cached_pool=cached_pool)
         training_cov_inv = inv(training_cov)
         # for each hyperparameter
         for param_name in hyperparams:
             if not param_name.startswith('theta'):
                 continue
             # compute gradient of log probability with respect to the parameter
-            gradients[param_name] = gradient_log_prob(gradient_funcs[param_name], X, Y, training_cov_inv)
+            gradients[param_name] = gradient_log_prob(gradient_funcs[param_name], X, Y, training_cov_inv, cached_pool=cached_pool)
             # update each parameter according to learning rate and gradient
             #scale = 0.1 if param_name is 'theta_amp' else 0.01
             step = learning_rate(i) * gradients[param_name]
@@ -43,27 +44,27 @@ def gradient_descent(hyperparams, X, Y, learning_rate=None, epochs=200):
         print('gradients:')
         print({ 'theta_amp': gradients['theta_amp'], 'theta_length': gradients['theta_length'] })
         print('log_prob:')
-        new_log_prob = calc_log_prob(X, Y, training_cov_inv, covariance_func)
+        new_log_prob = calc_log_prob(X, Y, training_cov_inv, covariance_func, cached_pool)
         print(new_log_prob)
         log_prob = new_log_prob
     return (params, log_prob)
 
-def gradient_log_prob(gradient_func, X, Y, training_cov_inv):
+def gradient_log_prob(gradient_func, X, Y, training_cov_inv, cached_pool=None):
     print('Computing gradient of covariance matrix')
     start = time.time()
-    gradient_cov_mat = cartesian_operation(X, function=gradient_func)
+    gradient_cov_mat = cartesian_operation(X, function=gradient_func, cached_pool=cached_pool)
     end = time.time()
     print('%d seconds' % (end - start))
     term_1 = np.trace(training_cov_inv.dot(gradient_cov_mat))
     term_2 = Y.T.dot(training_cov_inv).dot(gradient_cov_mat).dot(training_cov_inv).dot(Y)
     return 0.5 * (term_1 + term_2)
 
-def calc_log_prob(X, Y, training_cov_inv, covariance_func):
+def calc_log_prob(X, Y, training_cov_inv, covariance_func, cached_pool=None):
     term_1 = Y.T.dot(training_cov_inv).dot(Y)
-    term_2 = log(mag(cartesian_operation(X, function=covariance_func)))
+    term_2 = log(mag(cartesian_operation(X, function=covariance_func, cached_pool=cached_pool)))
     return -0.5 * (term_1 + term_2)
 
-def default_learning_rate(i, scale=0.01):
+def default_learning_rate(i, scale=1.0):
     if i < 80:
         return 1.0 * scale
     elif i < 120:
@@ -82,20 +83,23 @@ def generate_random_hyperparams(params, randomize=[]):
     return rand_params
 
 def initial_length_scales(X):
+    pool = create_pool()
     X_t = X.T
     length_scales = np.ones(X_t.shape[0])
     for i in range(0, X_t.shape[0]):
-        length_scales[i] = cartesian_operation(X_t[i].T, function=squared_distance).std()
+        length_scales[i] = cartesian_operation(X_t[i].T, function=squared_distance, cached_pool=pool).std()
     length_scales[length_scales == 0.0] = 1.0
     length_scales = np.sqrt(np.reciprocal(length_scales))
+    pool.close()
     return length_scales
 
-def optimize_hyperparams(params, X, Y, rand_restarts=10):
+def optimize_hyperparams(params, X, Y, rand_restarts=1):
+    pool = create_pool()
     best_candidate = None
     for i in range(0, rand_restarts):
         new_params = generate_random_hyperparams(params)
         try: 
-            candidate = gradient_descent(new_params, X, Y)
+            candidate = gradient_descent(new_params, X, Y, cached_pool=pool)
             # if new candidates log prob is higher than best candidate's
             if best_candidate is None or candidate[1] > best_candidate[1]:
                 best_candidate = candidate
@@ -103,5 +107,6 @@ def optimize_hyperparams(params, X, Y, rand_restarts=10):
             print('An error occurred')
             print(e)
             continue
+    pool.close()
     # return the best set of params found
     return best_candidate[0]
