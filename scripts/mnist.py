@@ -7,6 +7,7 @@ from lib.gaussian_process.model import GaussianProcess as GP
 from lib.gaussian_process import utilities
 from numpy.linalg import inv, norm as mag
 from math import exp
+import multiprocessing as mp
 
 class MNISTTrainer:
   @staticmethod
@@ -99,4 +100,5 @@ if __name__ == '__main__':
   if len(sys.argv) > 1:
     command = sys.argv[1]
     if command == 'predict':
-      MNISTTrainer.gaussian_process_predict(num_training_examples=5000, num_targets=50)
+      mp.log_to_stderr().setLevel(mp.util.DEBUG)
+      MNISTTrainer.gaussian_process_predict(num_training_examples=100, num_targets=50)
