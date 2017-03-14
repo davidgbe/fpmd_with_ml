@@ -57,6 +57,8 @@ def cartesian_operation(X_1, X_2=None, function=None, cores=None, cached_pool=No
 
     chunk_size_1 = int(sqrt(rows_1 * rows_2 / cores))
     chunk_size_2 = chunk_size_1
+    print('chunk size:')
+    print(chunk_size_1)
 
     iter_size_1 = chunk_size_1 * cols
     iter_size_2 = chunk_size_2 * cols
