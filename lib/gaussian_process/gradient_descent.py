@@ -91,6 +91,7 @@ def initial_length_scales(X):
     length_scales[length_scales == 0.0] = 1.0
     length_scales = np.sqrt(np.reciprocal(length_scales))
     pool.close()
+    pool.join()
     return length_scales
 
 def optimize_hyperparams(params, X, Y, rand_restarts=1):
@@ -108,5 +109,6 @@ def optimize_hyperparams(params, X, Y, rand_restarts=1):
             print(e)
             continue
     pool.close()
+    pool.join()
     # return the best set of params found
     return best_candidate[0]
