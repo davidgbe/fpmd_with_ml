@@ -56,9 +56,8 @@ def cartesian_operation(X_1, X_2=None, function=None, cores=None, cached_pool=No
     flattened_2 = np.array(X_2).reshape(rows_2*cols)
 
     chunk_size_1 = int(sqrt(rows_1 * rows_2 / cores))
+    chunk_size_1 = chunk_size_1 if chunk_size_1 <= 500 else 500
     chunk_size_2 = chunk_size_1
-    print('chunk size:')
-    print(chunk_size_1)
 
     iter_size_1 = chunk_size_1 * cols
     iter_size_2 = chunk_size_2 * cols
