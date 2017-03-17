@@ -77,8 +77,8 @@ def cartesian_operation(X_1, X_2=None, function=None, cores=None, cached_pool=No
     chunks_num_1 = int(ceil(float(rows_1) / chunk_size_1))
     chunks_num_2 = int(ceil(float(rows_2) / chunk_size_2))
 
-    results = [ np.concatenate(async_results[j:j+chunks_num_2], axis=1) for j in range(0, chunks_num_1*chunks_num_2, chunks_num_2) ]
-    return np.concatenate(results)
+    async_results = [ np.concatenate(async_results[j:j+chunks_num_2], axis=1) for j in range(0, chunks_num_1*chunks_num_2, chunks_num_2) ]
+    return np.concatenate(async_results)
 
 def get_gradient_funcs(hyperparams):
     return {
