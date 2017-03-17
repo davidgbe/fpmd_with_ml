@@ -27,8 +27,8 @@ class GaussianProcess:
         (rows, cols) = predictions.shape
         return predictions.reshape(rows*cols)
 
-    def generate_length_scales(self, X, limit=500):
-        self.hyperparams['length_scales'] = initial_length_scales(X[:limit])
+    def generate_length_scales(self, X):
+        self.hyperparams['length_scales'] = initial_length_scales(X)
 
     def predict(self, X, Y, target_X):
         if 'length_scales' not in self.hyperparams:

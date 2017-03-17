@@ -12,17 +12,15 @@ import multiprocessing as mp
 class MNISTTrainer:
   @staticmethod
   def gaussian_process_predict(num_training_examples=None, num_targets=None):
-    train_X = MNISTTrainer.load_images_dataset('../datasets/mnist/train-images-idx3-ubyte')
-    train_Y = MNISTTrainer.load_labels('../datasets/mnist/train-labels-idx1-ubyte')
-    if num_training_examples is not None:
-      (train_X, mean_train_X, std_train_X) = utilities.normalize(train_X[:num_training_examples])
-      (train_Y, mean_train_Y, std_train_Y) = utilities.normalize(train_Y[:num_training_examples])
+    train_X = MNISTTrainer.load_images_dataset('../datasets/mnist/train-images-idx3-ubyte', num_training_examples)
+    train_Y = MNISTTrainer.load_labels('../datasets/mnist/train-labels-idx1-ubyte', num_training_examples)
+    (train_X, mean_train_X, std_train_X) = utilities.normalize(train_X)
+    (train_Y, mean_train_Y, std_train_Y) = utilities.normalize(train_Y)
 
-    X = MNISTTrainer.load_images_dataset('../datasets/mnist/t10k-images-idx3-ubyte')
-    Y = MNISTTrainer.load_labels('../datasets/mnist/t10k-labels-idx1-ubyte')
-    if num_targets is not None:
-      (X, mean_X, std_X) = utilities.normalize(X[:num_targets])
-      (Y, mean_Y, std_Y) = utilities.normalize(Y[:num_targets])
+    X = MNISTTrainer.load_images_dataset('../datasets/mnist/t10k-images-idx3-ubyte', num_targets)
+    Y = MNISTTrainer.load_labels('../datasets/mnist/t10k-labels-idx1-ubyte', num_targets)
+    (X, mean_X, std_X) = utilities.normalize(X)
+    (Y, mean_Y, std_Y) = utilities.normalize(Y)
 
     gp = GP()
 
@@ -37,7 +35,7 @@ class MNISTTrainer:
     print(std_Y * Y + mean_Y)
 
   @staticmethod
-  def load_labels(rel_path):
+  def load_labels(rel_path, limit=None):
     print('Loading labels...')
     start = time.time()
 
@@ -51,10 +49,13 @@ class MNISTTrainer:
 
     end = time.time()
     print('Finished loading labels in %d s' % (end - start))
-    return labels
+    if limit is None:
+        return labels
+    else:
+        return labels[:limit]
 
   @staticmethod
-  def load_images_dataset(rel_path):
+  def load_images_dataset(rel_path, limit=None):
     print('Loading image dataset...')
     start = time.time()
 
@@ -71,7 +72,10 @@ class MNISTTrainer:
 
     end = time.time()
     print('Images loaded in %d s' % (end - start))
-    return raw_images
+    if limit is None:
+        return raw_images
+    else:
+        return raw_images[:limit]
 
   @staticmethod
   def read_ints(file, size):
