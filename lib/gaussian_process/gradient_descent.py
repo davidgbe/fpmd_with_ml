@@ -18,6 +18,7 @@ def gradient_descent(hyperparams, X, Y, learning_rate=None, epochs=200, cached_p
     covariance_func = partial(default_covariance_func, hyperparams=params)
     gradient_funcs = get_gradient_funcs(params)
     log_prob = 1.0
+    print_memory()
 
     training_cov = cartesian_operation(X, function=covariance_func, cached_pool=cached_pool)
     training_cov_inv = inv(training_cov)
@@ -48,6 +49,8 @@ def gradient_descent(hyperparams, X, Y, learning_rate=None, epochs=200, cached_p
         new_log_prob = calc_log_prob(X, Y, training_cov_inv, covariance_func, cached_pool)
         print(new_log_prob)
         log_prob = new_log_prob
+        print("Completed %d" % i)
+        print_memory()
     return (params, log_prob)
 
 def gradient_log_prob(gradient_func, X, Y, training_cov_inv, cached_pool=None):
@@ -87,10 +90,11 @@ def initial_length_scales(X):
     pool = create_pool()
     X_t = X.T
     length_scales = np.ones(X_t.shape[0])
-    print_memory()
+    print("Generating %d scales" % X_t.shape[0])
     for i in range(0, X_t.shape[0]):
         #tr = tracker.SummaryTracker()
         length_scales[i] = cartesian_operation(X_t[i].T, function=squared_distance, cached_pool=pool).std()
+        print("%d completed" % i)
         print_memory()
         #tr.print_diff()
     length_scales[length_scales == 0.0] = 1.0
@@ -100,6 +104,7 @@ def initial_length_scales(X):
     return length_scales
 
 def optimize_hyperparams(params, X, Y, rand_restarts=1):
+    print('Optimizing hyperparams...')
     pool = create_pool()
     best_candidate = None
     for i in range(0, rand_restarts):

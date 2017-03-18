@@ -37,6 +37,7 @@ class GaussianProcess:
         return self.batch_predict(X, Y, target_X)
 
     def fit(self, X, Y):
+        print('Generating length scales...')
         self.generate_length_scales(X)
         print('Finished generating length scales')
         self.hyperparams = optimize_hyperparams(self.hyperparams, X, Y)

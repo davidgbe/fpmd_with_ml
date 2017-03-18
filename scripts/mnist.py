@@ -15,13 +15,9 @@ class MNISTTrainer:
     utilities.print_memory()
 
     train_X = MNISTTrainer.load_images_dataset('../datasets/mnist/train-images-idx3-ubyte', num_training_examples)
-    utilities.print_memory()
     train_Y = MNISTTrainer.load_labels('../datasets/mnist/train-labels-idx1-ubyte', num_training_examples)
-    utilities.print_memory()
     (train_X, mean_train_X, std_train_X) = utilities.normalize(train_X)
-    utilities.print_memory()
     (train_Y, mean_train_Y, std_train_Y) = utilities.normalize(train_Y)
-    utilities.print_memory()
 
     utilities.print_memory()
 
@@ -29,8 +25,6 @@ class MNISTTrainer:
     Y = MNISTTrainer.load_labels('../datasets/mnist/t10k-labels-idx1-ubyte', num_targets)
     (X, mean_X, std_X) = utilities.normalize(X)
     (Y, mean_Y, std_Y) = utilities.normalize(Y)
-
-    utilities.print_memory()
 
     gp = GP()
 
@@ -70,23 +64,17 @@ class MNISTTrainer:
     print('Loading image dataset...')
     start = time.time()
 
-    utilities.print_memory()
     images_file = open(utilities.file_path(__file__, rel_path), 'rb')
-    utilities.print_memory()
     (mag, num_examples, rows, cols) = MNISTTrainer.read(images_file, 16, 'i', 4)
     num_examples = limit if (limit is not None and limit < num_examples) else num_examples
-    utilities.print_memory()
 
     print('Number of examples: %d' % num_examples)
     print('Rows of pixels per image: %d' % rows)
     print('Columns of pixels per image: %d' % cols)
 
     raw_images = MNISTTrainer.read_bytes(images_file, num_examples * rows * cols)
-    utilities.print_memory()
     vec_func = np.vectorize(MNISTTrainer.convert_to_unsigned_int)
-    utilities.print_memory()
     raw_images = np.mat([ vec_func(np.array(raw_images[i:i + rows * cols])) for i in range(0, len(raw_images), rows * cols) ])
-    utilities.print_memory()
     images_file.close()
 
     end = time.time()
