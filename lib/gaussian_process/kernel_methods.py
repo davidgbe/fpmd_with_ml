@@ -4,7 +4,6 @@ from math import exp, ceil, sqrt
 from functools import partial
 from .utilities import create_pool
 import multiprocessing as mp
-from memory_profiler import profile
 
 def squared_distance(v_1, v_2):
     return np.square(v_1 - v_2)
@@ -28,7 +27,8 @@ def covariance_mat_derivative_theta_amp(x_1, x_2, hyperparams):
     return 2.0 * hyperparams['theta_amp'] * exp(-0.5 * covariance_exp_arg(x_1, x_2, hyperparams) / l**2.0)
 
 # applies function pairwise for two arrays
-def operation_on_chunk(chunk_1, chunk_2, function, func_input_size):
+def operation_on_chunk(chunks, function, func_input_size):
+    (chunk_1, chunk_2) = chunks
     transformed_mat = np.zeros((int(chunk_1.size/func_input_size), int(chunk_2.size/func_input_size)))
     for i in range(0, chunk_1.size, func_input_size):
         for j in range(0, chunk_2.size, func_input_size):
@@ -69,11 +69,13 @@ def cartesian_operation(X_1, X_2=None, function=None, cores=None, cached_pool=No
         for j in range(0, rows_2, chunk_size_2):
             chunk_i = flattened_1[ (cols * i) : ((cols * i) + iter_size_1) ]
             chunk_j = flattened_2[ (cols * j) : ((cols * j) + iter_size_2) ]
-            async_results.append(pool.apply_async(operation_on_chunk, (chunk_i, chunk_j, function, cols)))
+            async_results.append((chunk_i, chunk_j))
+
+    operation = partial(operation_on_chunk, function=function, func_input_size=cols)
+    async_results = pool.map_async(operation, async_results).get()
 
     if cached_pool is None:
         pool.close()
-    async_results = [ res.get() for res in async_results]
 
     chunks_num_1 = int(ceil(float(rows_1) / chunk_size_1))
     chunks_num_2 = int(ceil(float(rows_2) / chunk_size_2))

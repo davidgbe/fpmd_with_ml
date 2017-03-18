@@ -7,7 +7,6 @@ from functools import partial
 from copy import deepcopy
 from random import random
 from .utilities import create_pool
-from memory_profiler import profile
 
 def gradient_descent(hyperparams, X, Y, learning_rate=None, epochs=200, cached_pool=None):
     learning_rate = default_learning_rate if learning_rate is None else learning_rate
@@ -83,7 +82,6 @@ def generate_random_hyperparams(params, randomize=[]):
         rand_params[name] = 10000.0 * random()
     return rand_params
 
-@profile
 def initial_length_scales(X):
     pool = create_pool()
     X_t = X.T
