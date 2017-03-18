@@ -4,6 +4,7 @@ from math import exp, ceil, sqrt
 from functools import partial
 from .utilities import create_pool
 import multiprocessing as mp
+from memory_profiler import profile
 
 def squared_distance(v_1, v_2):
     return np.square(v_1 - v_2)
