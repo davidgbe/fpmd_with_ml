@@ -6,7 +6,7 @@ from .kernel_methods import cartesian_operation, default_covariance_func, get_gr
 from functools import partial
 from copy import deepcopy
 from random import random
-from .utilities import create_pool
+from .utilities import create_pool, print_memory
 from pympler import tracker
 
 def gradient_descent(hyperparams, X, Y, learning_rate=None, epochs=200, cached_pool=None):
@@ -87,9 +87,11 @@ def initial_length_scales(X):
     pool = create_pool()
     X_t = X.T
     length_scales = np.ones(X_t.shape[0])
+    print_memory()
     for i in range(0, X_t.shape[0]):
         #tr = tracker.SummaryTracker()
         length_scales[i] = cartesian_operation(X_t[i].T, function=squared_distance, cached_pool=pool).std()
+        print_memory()
         #tr.print_diff()
     length_scales[length_scales == 0.0] = 1.0
     length_scales = np.sqrt(np.reciprocal(length_scales))
