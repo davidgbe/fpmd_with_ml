@@ -7,6 +7,7 @@ from functools import partial
 from copy import deepcopy
 from random import random
 from .utilities import create_pool
+from pympler import tracker
 
 def gradient_descent(hyperparams, X, Y, learning_rate=None, epochs=200, cached_pool=None):
     learning_rate = default_learning_rate if learning_rate is None else learning_rate
@@ -87,7 +88,9 @@ def initial_length_scales(X):
     X_t = X.T
     length_scales = np.ones(X_t.shape[0])
     for i in range(0, X_t.shape[0]):
+        #tr = tracker.SummaryTracker()
         length_scales[i] = cartesian_operation(X_t[i].T, function=squared_distance, cached_pool=pool).std()
+        #tr.print_diff()
     length_scales[length_scales == 0.0] = 1.0
     length_scales = np.sqrt(np.reciprocal(length_scales))
     pool.close()
