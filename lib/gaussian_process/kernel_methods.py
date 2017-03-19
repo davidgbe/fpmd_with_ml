@@ -37,7 +37,7 @@ def operation_on_chunk(chunks, function, func_input_size):
 
 # runs an operation iteratively for every pair selected from X_1 and X_2
 # distributes work across cores provided
-def cartesian_operation(X_1, X_2=None, function=None, cores=None, cached_pool=None):
+def cartesian_operation(X_1, X_2=None, function=None, cores=None, cached_pool=None, max_chunk_size=500):
     pool = cached_pool
     cores = mp.cpu_count() if cores is None else cores
     pool = create_pool(cores) if pool is None else pool
@@ -57,7 +57,7 @@ def cartesian_operation(X_1, X_2=None, function=None, cores=None, cached_pool=No
     flattened_2 = np.array(X_2).reshape(rows_2*cols)
 
     chunk_size_1 = int(sqrt(rows_1 * rows_2 / cores))
-    chunk_size_1 = chunk_size_1 if chunk_size_1 <= 500 else 500
+    chunk_size_1 = chunk_size_1 if chunk_size_1 <= max_chunk_size else max_chunk_size
     chunk_size_2 = chunk_size_1
 
     iter_size_1 = chunk_size_1 * cols
