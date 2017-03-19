@@ -8,7 +8,7 @@ from copy import deepcopy
 from random import random
 from .utilities import create_pool, print_memory
 
-def gradient_descent(hyperparams, X, Y, learning_rate=None, epochs=500, cached_pool=None):
+def gradient_descent(hyperparams, X, Y, learning_rate=None, epochs=5000, cached_pool=None):
     learning_rate = default_learning_rate if learning_rate is None else learning_rate
 
     gradients = deepcopy(hyperparams)
@@ -36,7 +36,7 @@ def gradient_descent(hyperparams, X, Y, learning_rate=None, epochs=500, cached_p
             # compute gradient of log probability with respect to the parameter
             gradients[param_name] = gradient_log_prob(gradient_funcs[param_name], X, Y, training_cov_inv, cached_pool=cached_pool)
             # update each parameter according to learning rate and gradient
-            scale = 100.0 if param_name is 'theta_amp' else 1.0
+            scale = 1.0
             step = learning_rate(i, epochs, scale) * gradients[param_name]
             print(step, param_name)
             params[param_name] += step
@@ -68,15 +68,16 @@ def calc_log_prob(X, Y, training_cov, training_cov_inv, covariance_func, cached_
     return -0.5 * (term_1 + term_2)
 
 def default_learning_rate(i, total, scale=0.1):
+    internal_scale = 300.0
     frac = float(i) / total
     if frac < 0.2 :
-        return 1.0 * scale
+        return 1.0 * scale * internal_scale
     elif frac < 0.5:
-        return 0.5 * scale
-    elif frac < 0.8:
-        return 0.01 * scale
+        return 0.5 * scale * internal_scale
+    elif frac < 0.95:
+        return 0.1 * scale * internal_scale
     else:
-        return 0.001 * scale
+        return 0.05 * scale * internal_scale
 
 def generate_random_hyperparams(params, randomize=[]):
     rand_params = deepcopy(params)

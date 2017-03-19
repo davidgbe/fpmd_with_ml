@@ -21,6 +21,11 @@ def normalize(mat):
         normed = np.nan_to_num(normed)
     return (normed, mean, std)
 
+def zero_mean(mat):
+    mean = mat.mean(0)
+    normed = mat - mean
+    return (normed, mean)
+
 def to_grayscale(recon, original):
     return np.multiply(recon, original.std(0)) + original.mean(0)
 
