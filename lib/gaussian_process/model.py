@@ -5,30 +5,34 @@ import time
 from .gradient_descent import optimize_hyperparams, initial_length_scales
 from .kernel_methods import default_covariance_func, cartesian_operation
 from functools import partial
+from .utilities import create_pool
 
 class GaussianProcess:
     def __init__(self, covariance_func=None):
         self.covariance_func = default_covariance_func if covariance_func is None else covariance_func
-        self.hyperparams = {'theta_length': 1.0, 'theta_amp': 1.0}
+        self.hyperparams = {'theta_amp': 1.0, 'theta_length': 1.0}
         self.covariance_func = partial(self.covariance_func, hyperparams=self.hyperparams)
 
-    def single_predict(self, target_x, training_cov_inv, Y_t, X):
-        training_target_cov = cartesian_operation(X, target_x, function=self.covariance_func)
+    def single_predict(self, target_x, training_cov_inv, Y_t, X, cached_pool=None):
+        training_target_cov = cartesian_operation(X, target_x, function=self.covariance_func, cached_pool=cached_pool)
         #target_cov = self.compute_covariance(target_x)
         mean = training_target_cov.T.dot(training_cov_inv).dot(Y_t)
         #stdevs = target_cov - training_target_cov.T.dot(training_cov_inv).dot(training_target_cov)
         return mean.reshape(1)
 
     def batch_predict(self, X, Y, target_X):
-        training_cov_inv = inv(cartesian_operation(X, function=self.covariance_func))
+        pool = create_pool()
+        training_cov_inv = inv(cartesian_operation(X, function=self.covariance_func, cached_pool=pool))
         Y_t = Y.reshape(Y.size, 1)
 
-        predictions = np.apply_along_axis(self.single_predict, 1, target_X, training_cov_inv, Y_t, X)
+        predictions = np.apply_along_axis(self.single_predict, 1, target_X, training_cov_inv, Y_t, X, pool)
+        pool.close()
         (rows, cols) = predictions.shape
         return predictions.reshape(rows*cols)
 
     def generate_length_scales(self, X):
         self.hyperparams['length_scales'] = initial_length_scales(X)
+        print(self.hyperparams['length_scales'])
 
     def predict(self, X, Y, target_X):
         if 'length_scales' not in self.hyperparams:
