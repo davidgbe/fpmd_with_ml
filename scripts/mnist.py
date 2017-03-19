@@ -116,4 +116,4 @@ if __name__ == '__main__':
     command = sys.argv[1]
     if command == 'predict':
       #mp.log_to_stderr().setLevel(mp.util.DEBUG)
-      MNISTTrainer.gaussian_process_predict(num_training_examples=100, num_targets=50)
+      MNISTTrainer.gaussian_process_predict(num_training_examples=5000, num_targets=50)
