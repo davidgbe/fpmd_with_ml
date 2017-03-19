@@ -32,7 +32,7 @@ class GaussianProcess:
 
     def generate_length_scales(self, X):
         self.hyperparams['length_scales'] = initial_length_scales(X)
-        print(self.hyperparams['length_scales'])
+        self.hyperparams['theta_length'] = np.sqrt(self.hyperparams['length_scales'].mean())
 
     def predict(self, X, Y, target_X):
         if 'length_scales' not in self.hyperparams:
