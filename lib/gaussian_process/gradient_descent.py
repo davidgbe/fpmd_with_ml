@@ -8,7 +8,7 @@ from copy import deepcopy
 from random import random
 from .utilities import create_pool, print_memory
 
-def gradient_descent(hyperparams, X, Y, learning_rate=None, epochs=200, cached_pool=None):
+def gradient_descent(hyperparams, X, Y, learning_rate=None, epochs=500, cached_pool=None):
     learning_rate = default_learning_rate if learning_rate is None else learning_rate
 
     gradients = deepcopy(hyperparams)
@@ -16,7 +16,7 @@ def gradient_descent(hyperparams, X, Y, learning_rate=None, epochs=200, cached_p
     log_probs = deepcopy(hyperparams)
     covariance_func = partial(default_covariance_func, hyperparams=params)
     gradient_funcs = get_gradient_funcs(params)
-    log_prob = 1.0
+    log_prob = 0.0
     print_memory()
 
     training_cov = cartesian_operation(X, function=covariance_func, cached_pool=cached_pool)
@@ -36,7 +36,7 @@ def gradient_descent(hyperparams, X, Y, learning_rate=None, epochs=200, cached_p
             # compute gradient of log probability with respect to the parameter
             gradients[param_name] = gradient_log_prob(gradient_funcs[param_name], X, Y, training_cov_inv, cached_pool=cached_pool)
             # update each parameter according to learning rate and gradient
-            scale = 20.0 if param_name is 'theta_amp' else 1.0
+            scale = 100.0 if param_name is 'theta_amp' else 1.0
             step = learning_rate(i, epochs, scale) * gradients[param_name]
             print(step, param_name)
             params[param_name] += step
@@ -78,7 +78,7 @@ def default_learning_rate(i, total, scale=0.1):
     else:
         return 0.001 * scale
 
-def generate_random_hyperparams(params, randomize=['theta_amp', 'theta_length']):
+def generate_random_hyperparams(params, randomize=[]):
     rand_params = deepcopy(params)
     for name in randomize:
         if name not in params:
@@ -87,21 +87,14 @@ def generate_random_hyperparams(params, randomize=['theta_amp', 'theta_length'])
     return rand_params
 
 def initial_length_scales(X):
-    pool = create_pool()
-    X_t = X.T
-    length_scales = np.ones(X_t.shape[0])
-    print("Generating %d scales" % X_t.shape[0])
-    for i in range(0, X_t.shape[0]):
-        length_scales[i] = cartesian_operation(X_t[i].T, function=squared_distance, cached_pool=pool).std()
-        print("%d completed" % i)
-        print_memory()
+    print("Generating %d scales" % X.shape[1])
+    length_scales = X.std(0)
+    print_memory()
     length_scales[length_scales == 0.0] = 1.0
-    length_scales = np.sqrt(np.reciprocal(length_scales))
-    pool.close()
-    pool.join()
-    return length_scales
+    length_scales = np.square(np.reciprocal(length_scales))
+    return length_scales.T
 
-def optimize_hyperparams(params, X, Y, rand_restarts=3):
+def optimize_hyperparams(params, X, Y, rand_restarts=1):
     print('Optimizing hyperparams...')
     pool = create_pool()
     best_candidate = None

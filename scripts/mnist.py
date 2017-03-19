@@ -20,16 +20,16 @@ class MNISTTrainer:
     train_X = train_X[:, ~zero_cols]
 
     train_Y = MNISTTrainer.load_labels('../datasets/mnist/train-labels-idx1-ubyte', num_training_examples)
-    (train_X, mean_train_X, std_train_X) = utilities.normalize(train_X)
-    (train_Y, mean_train_Y, std_train_Y) = utilities.normalize(train_Y)
+    # (train_X, mean_train_X, std_train_X) = utilities.normalize(train_X)
+    # (train_Y, mean_train_Y, std_train_Y) = utilities.normalize(train_Y)
 
     utilities.print_memory()
 
     X = MNISTTrainer.load_images_dataset('../datasets/mnist/t10k-images-idx3-ubyte', num_targets)
     X = X[:, ~zero_cols]
     Y = MNISTTrainer.load_labels('../datasets/mnist/t10k-labels-idx1-ubyte', num_targets)
-    (X, mean_X, std_X) = utilities.normalize(X)
-    (Y, mean_Y, std_Y) = utilities.normalize(Y)
+    # (X, mean_X, std_X) = utilities.normalize(X)
+    # (Y, mean_Y, std_Y) = utilities.normalize(Y)
 
     gp = GP()
 
@@ -38,10 +38,12 @@ class MNISTTrainer:
 
     print('Predicting...')
     predictions = gp.predict(train_X, train_Y, X)
+    predictions = [ int(pred) for pred in predictions ]
     # print predictions
     print(predictions)
-    print(std_Y * predictions + mean_Y)
-    print(std_Y * Y + mean_Y)
+    # print(std_Y * predictions + mean_Y)
+    # print(std_Y * Y + mean_Y)
+    print(Y)
 
   @staticmethod
   def load_labels(rel_path, limit=None):
