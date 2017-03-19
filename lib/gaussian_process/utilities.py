@@ -43,6 +43,7 @@ def file_path(curr_file, *path_elements):
 def bucket(data, bucket_size):
     return [ np.mean(data[i:i+bucket_size]) for i in range(0, len(data), bucket_size) ]
 
+# http://pythonforbiologists.com/index.php/measuring-memory-usage-in-python/
 def print_memory():
     b = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss
     print("%d mB" % (b / 1000000.0))
