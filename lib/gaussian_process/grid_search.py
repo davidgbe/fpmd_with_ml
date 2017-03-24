@@ -9,11 +9,15 @@ from .utilities import create_pool
 def grid_search(X, Y, params, fixed_params, segs_per_order_mag=3):
     total_iterations = 1
     for p in params:
-        total_iterations *= len(params[p])
+        print(p)
+        print(params[p])
+        print(int(1 + mag(params[p][0] - params[p][1])))
+        total_iterations *= int(mag(params[p][0] - params[p][1]))
     total_iterations *= segs_per_order_mag
+    print(total_iterations)
     print('Beginning grid search...')
     best_param_set = None
-    largest_prob = -1 * np.inf
+    largest_prob = -np.inf
     print(largest_prob)
 
     pool = create_pool()
@@ -23,7 +27,7 @@ def grid_search(X, Y, params, fixed_params, segs_per_order_mag=3):
     count = 0
     for param_set in gen_params(param_names, orders_for_params, segs_per_order_mag):
         if count % 10 == 0:
-            print("%d percent complete" % (count / total_iterations))
+            print("%d percent complete" % (float(count) / total_iterations * 100))
         param_set.update(fixed_params)
         #print_params(param_set)
         covariance_func = partial(default_covariance_func, hyperparams=param_set)

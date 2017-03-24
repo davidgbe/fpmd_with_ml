@@ -16,8 +16,10 @@ def gradient_descent(hyperparams, X, Y, learning_rate=None, epochs=100, cached_p
     log_probs = deepcopy(hyperparams)
     covariance_func = partial(default_covariance_func, hyperparams=params)
     gradient_funcs = get_gradient_funcs(params)
-    log_prob = 0.0
-    print_memory()
+    log_prob = -np.inf
+
+    best_hyperparams = deepcopy(hyperparams)
+    best_log_prob = -np.inf
 
     training_cov = cartesian_operation(X, function=covariance_func, cached_pool=cached_pool)
     training_cov_inv = inv(training_cov)
@@ -48,9 +50,12 @@ def gradient_descent(hyperparams, X, Y, learning_rate=None, epochs=100, cached_p
         new_log_prob = calc_log_prob(X, Y, training_cov, training_cov_inv)
         print(new_log_prob)
         log_prob = new_log_prob
+        if log_prob > best_log_prob:
+            best_hyperparams = deepcopy(params)
+            best_log_prob = log_prob
         print("Completed %d" % i)
         print_memory()
-    return (params, log_prob)
+    return (best_hyperparams, best_log_prob)
 
 def gradient_log_prob(gradient_func, X, Y, training_cov_inv, cached_pool=None):
     print('Computing gradient of covariance matrix')
@@ -70,14 +75,15 @@ def calc_log_prob(X, Y, training_cov, training_cov_inv):
 def default_learning_rate(i, total, scale=0.1):
     internal_scale = 0.1
     frac = float(i) / total
+    total_scale = scale * internal_scale
     if frac < 0.2 :
-        return 1.0 * scale * internal_scale
+        return 1.0 * total_scale
     elif frac < 0.5:
-        return 0.5 * scale * internal_scale
+        return 0.5 * total_scale
     elif frac < 0.95:
-        return 0.1 * scale * internal_scale
+        return 0.1 * total_scale
     else:
-        return 0.05 * scale * internal_scale
+        return 0.05 * total_scale
 
 def generate_random_hyperparams(params, randomize=[]):
     rand_params = deepcopy(params)
@@ -112,5 +118,7 @@ def optimize_hyperparams(params, X, Y, rand_restarts=1):
             continue
     pool.close()
     pool.join()
+    print('Best candidate:')
+    print(best_candidate)
     # return the best set of params found
     return best_candidate[0]
