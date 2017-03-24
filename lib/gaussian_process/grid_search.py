@@ -11,7 +11,6 @@ def grid_search(X, Y, params, fixed_params, segs_per_order_mag=3):
     for p in params:
         print(p)
         print(params[p])
-        print(int(1 + mag(params[p][0] - params[p][1])))
         total_iterations *= (3 * int(mag(params[p][0] - params[p][1])))
     print(total_iterations)
     print('Beginning grid search...')
@@ -40,6 +39,7 @@ def grid_search(X, Y, params, fixed_params, segs_per_order_mag=3):
             largest_prob = log_prob
             best_param_set = param_set
     pool.close()
+    pool.join()
 
     print('best param set:')
     print_params(best_param_set)
