@@ -8,7 +8,7 @@ from copy import deepcopy
 from random import random
 from .utilities import create_pool, print_memory
 
-def gradient_descent(hyperparams, X, Y, learning_rate=None, epochs=300, cached_pool=None):
+def gradient_descent(hyperparams, X, Y, learning_rate=None, epochs=100, cached_pool=None):
     learning_rate = default_learning_rate if learning_rate is None else learning_rate
 
     gradients = deepcopy(hyperparams)
@@ -21,7 +21,7 @@ def gradient_descent(hyperparams, X, Y, learning_rate=None, epochs=300, cached_p
 
     training_cov = cartesian_operation(X, function=covariance_func, cached_pool=cached_pool)
     training_cov_inv = inv(training_cov)
-    new_log_prob = calc_log_prob(X, Y, training_cov, training_cov_inv, covariance_func, cached_pool=cached_pool)
+    new_log_prob = calc_log_prob(X, Y, training_cov, training_cov_inv)
     print('INITIAL LOG PROB', new_log_prob)
 
     # for number of epochs
@@ -45,7 +45,7 @@ def gradient_descent(hyperparams, X, Y, learning_rate=None, epochs=300, cached_p
         print('gradients:')
         print({ 'theta_amp': gradients['theta_amp'], 'theta_length': gradients['theta_length'] })
         print('log_prob:')
-        new_log_prob = calc_log_prob(X, Y, training_cov, training_cov_inv, covariance_func, cached_pool)
+        new_log_prob = calc_log_prob(X, Y, training_cov, training_cov_inv)
         print(new_log_prob)
         log_prob = new_log_prob
         print("Completed %d" % i)
@@ -62,13 +62,13 @@ def gradient_log_prob(gradient_func, X, Y, training_cov_inv, cached_pool=None):
     term_2 = Y.T.dot(training_cov_inv).dot(gradient_cov_mat).dot(training_cov_inv).dot(Y)
     return 0.5 * (term_1 + term_2)
 
-def calc_log_prob(X, Y, training_cov, training_cov_inv, covariance_func, cached_pool=None):
+def calc_log_prob(X, Y, training_cov, training_cov_inv):
     term_1 = Y.T.dot(training_cov_inv).dot(Y)
     term_2 = log(mag(training_cov))
     return -0.5 * (term_1 + term_2)
 
 def default_learning_rate(i, total, scale=0.1):
-    internal_scale = 300.0
+    internal_scale = 2.5
     frac = float(i) / total
     if frac < 0.2 :
         return 1.0 * scale * internal_scale
@@ -95,7 +95,7 @@ def initial_length_scales(X):
     length_scales = np.square(np.reciprocal(length_scales))
     return length_scales.T
 
-def optimize_hyperparams(params, X, Y, rand_restarts=3):
+def optimize_hyperparams(params, X, Y, rand_restarts=1):
     print('Optimizing hyperparams...')
     pool = create_pool()
     best_candidate = None

@@ -6,6 +6,7 @@ from .gradient_descent import optimize_hyperparams, initial_length_scales
 from .kernel_methods import default_covariance_func, cartesian_operation
 from functools import partial
 from .utilities import create_pool
+from .grid_search import grid_search
 
 class GaussianProcess:
     def __init__(self, covariance_func=None):
@@ -44,6 +45,8 @@ class GaussianProcess:
     def fit(self, X, Y):
         print('Generating length scales...')
         self.generate_length_scales(X)
+        fixed_params = { 'length_scales': self.hyperparams['length_scales'] }
+        self.hyperparams = grid_search(X, Y, { 'theta_amp': [-1, 4], 'theta_length': [-1, 4] }, fixed_params)
         print('Finished generating length scales')
         self.hyperparams = optimize_hyperparams(self.hyperparams, X, Y)
         print('RESULT:')
