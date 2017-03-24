@@ -12,7 +12,7 @@ def grid_search(X, Y, params, fixed_params, segs_per_order_mag=3):
         total_iterations *= len(params[p])
     total_iterations *= segs_per_order_mag
     print('Beginning grid search...')
-    best_param_sets = []
+    best_param_set = None
     largest_prob = -1 * np.inf
     print(largest_prob)
 
