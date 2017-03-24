@@ -6,8 +6,13 @@ from .kernel_methods import cartesian_operation, default_covariance_func
 from functools import partial
 from .utilities import create_pool
 
-def grid_search(X, Y, params, fixed_params):
-    best_param_set = None
+def grid_search(X, Y, params, fixed_params, segs_per_order_mag=3):
+    total_iterations = 1
+    for p in params:
+        total_iterations *= len(params[p])
+    total_iterations *= segs_per_order_mag
+    print('Beginning grid search...')
+    best_param_sets = []
     largest_prob = -1 * np.inf
     print(largest_prob)
 
@@ -15,7 +20,10 @@ def grid_search(X, Y, params, fixed_params):
 
     param_names = list(params.keys())
     orders_for_params = list(params.values())
-    for param_set in gen_params(param_names, orders_for_params):
+    count = 0
+    for param_set in gen_params(param_names, orders_for_params, segs_per_order_mag):
+        if count % 10 == 0:
+            print("%d percent complete" % (count / total_iterations))
         param_set.update(fixed_params)
         #print_params(param_set)
         covariance_func = partial(default_covariance_func, hyperparams=param_set)
@@ -23,6 +31,8 @@ def grid_search(X, Y, params, fixed_params):
         training_cov_inv = inv(training_cov)
         log_prob = calc_log_prob(X, Y, training_cov, training_cov_inv)
         #print("log prob: %d" % log_prob)
+
+        count += 1
 
         if log_prob > largest_prob:
             largest_prob = log_prob
@@ -35,8 +45,8 @@ def grid_search(X, Y, params, fixed_params):
     print(largest_prob)
     return best_param_set
 
-def gen_params(param_names, orders):
-    for param_set in iterate_for_params(orders):
+def gen_params(param_names, orders, segs_per_order_mag):
+    for param_set in iterate_for_params(orders, segs_per_order_mag):
         labeled_params = {}
         #print(param_names)
         #print(param_set)
@@ -45,8 +55,7 @@ def gen_params(param_names, orders):
             labeled_params[param_names[i]] = param_set[i]
         yield labeled_params
 
-def iterate_for_params(orders, vals_for_iter=[]):
-    print(vals_for_iter)
+def iterate_for_params(orders, segs_per_order_mag, vals_for_iter=[]):
     if len(orders) == 0:
         yield vals_for_iter
     else:
@@ -55,15 +64,17 @@ def iterate_for_params(orders, vals_for_iter=[]):
         #print(int(mag(orders_for_param[0] - orders_for_param[1])))
         for i in range(int(1 + mag(orders_for_param[0] - orders_for_param[1]))):
             curr_order = min(orders_for_param[0], orders_for_param[1]) + i
-            new_vals_for_iter = deepcopy(vals_for_iter)
-            new_vals_for_iter.append(10**curr_order)
-            for vals in iterate_for_params(orders, new_vals_for_iter):
-                yield vals
+            for j in range(segs_per_order_mag):
+                new_vals_for_iter = deepcopy(vals_for_iter)
+                new_vals_for_iter.append(10**curr_order * (1 + j / segs_per_order_mag))
+                for vals in iterate_for_params(orders, segs_per_order_mag, new_vals_for_iter):
+                    yield vals
 
 def print_params(params):
     for param_name in params:
         if param_name != 'length_scales':
-            print(param_name + ": %d" % params[param_name])
+            print(param_name + ':')
+            print(params[param_name])
 
         
 

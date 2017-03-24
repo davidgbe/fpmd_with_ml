@@ -43,6 +43,7 @@ class MNISTTrainer:
     # print(std_Y * predictions + mean_Y)
     # print(std_Y * Y + mean_Y)
     print(Y)
+    print(utilities.calc_precision(predictions, Y))
 
   @staticmethod
   def load_labels(rel_path, limit=None):

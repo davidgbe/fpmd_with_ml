@@ -68,7 +68,7 @@ def calc_log_prob(X, Y, training_cov, training_cov_inv):
     return -0.5 * (term_1 + term_2)
 
 def default_learning_rate(i, total, scale=0.1):
-    internal_scale = 2.5
+    internal_scale = 0.1
     frac = float(i) / total
     if frac < 0.2 :
         return 1.0 * scale * internal_scale

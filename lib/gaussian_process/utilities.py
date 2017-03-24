@@ -52,3 +52,15 @@ def bucket(data, bucket_size):
 def print_memory():
     b = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss
     print("%d mB" % (b / 1000000.0))
+
+def calc_precision(predictions, actual):
+    if len(predictions) != len(actual):
+        raise ValueError('Predictions and results are different lengths')
+    else:
+        num_correct = 0
+        for i in range(len(predictions)):
+            if predictions[i] == actual[i]:
+                num_correct += 1
+        return num_correct / len(predictions)
+
+
