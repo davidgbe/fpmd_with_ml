@@ -113,7 +113,6 @@ class MNISTTrainer:
 
 if __name__ == '__main__':
   if len(sys.argv) > 1:
-    command = sys.argv[1]
-    if command == 'predict':
-      #mp.log_to_stderr().setLevel(mp.util.DEBUG)
-      MNISTTrainer.gaussian_process_predict(num_training_examples=100, num_targets=50)
+    num_exs = int(sys.argv[1])
+    #mp.log_to_stderr().setLevel(mp.util.DEBUG)
+    MNISTTrainer.gaussian_process_predict(num_training_examples=num_exs, num_targets=50)
