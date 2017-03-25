@@ -6,7 +6,7 @@ from .kernel_methods import cartesian_operation, default_covariance_func, get_gr
 from functools import partial
 from copy import deepcopy
 from random import random
-from .utilities import create_pool, print_memory
+from .utilities import create_pool
 
 def gradient_descent(hyperparams, X, Y, learning_rate=None, epochs=300, cached_pool=None):
     learning_rate = default_learning_rate if learning_rate is None else learning_rate
@@ -54,7 +54,6 @@ def gradient_descent(hyperparams, X, Y, learning_rate=None, epochs=300, cached_p
             best_hyperparams = deepcopy(params)
             best_log_prob = log_prob
         print("Completed %d" % i)
-        print_memory()
     return (best_hyperparams, best_log_prob)
 
 def gradient_log_prob(gradient_func, X, Y, training_cov_inv, cached_pool=None):

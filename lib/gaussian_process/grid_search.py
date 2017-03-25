@@ -4,7 +4,7 @@ from copy import deepcopy
 from .gradient_descent import calc_log_prob
 from .kernel_methods import cartesian_operation, default_covariance_func
 from functools import partial
-from .utilities import create_pool
+from .utilities import create_pool, print_memory
 
 def grid_search(X, Y, params, fixed_params, segs_per_order_mag=3):
     total_iterations = 1
@@ -24,7 +24,9 @@ def grid_search(X, Y, params, fixed_params, segs_per_order_mag=3):
     orders_for_params = list(params.values())
     count = 0
     for param_set in gen_params(param_names, orders_for_params, segs_per_order_mag):
+        print_memory()
         print("%d percent complete" % (float(count) / total_iterations * 100))
+        print()
         param_set.update(fixed_params)
         #print_params(param_set)
         covariance_func = partial(default_covariance_func, hyperparams=param_set)

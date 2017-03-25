@@ -12,8 +12,6 @@ import multiprocessing as mp
 class MNISTTrainer:
   @staticmethod
   def gaussian_process_predict(num_training_examples=None, num_targets=None):
-    utilities.print_memory()
-
     train_X = MNISTTrainer.load_images_dataset('../datasets/mnist/train-images-idx3-ubyte', num_training_examples)
     zero_cols = np.array((train_X.std(0) == 0.0))
     zero_cols = zero_cols.reshape(zero_cols.shape[1])
@@ -22,8 +20,6 @@ class MNISTTrainer:
     train_Y = MNISTTrainer.load_labels('../datasets/mnist/train-labels-idx1-ubyte', num_training_examples)
     (train_X, mean_train_X) = utilities.zero_mean(train_X)
     (train_Y, mean_train_Y) = utilities.zero_mean(train_Y)
-
-    utilities.print_memory()
 
     X = MNISTTrainer.load_images_dataset('../datasets/mnist/t10k-images-idx3-ubyte', num_targets)
     X = X[:, ~zero_cols]

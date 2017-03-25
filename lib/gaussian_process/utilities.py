@@ -2,10 +2,11 @@ import numpy as np
 import os
 import multiprocessing as mp
 import resource
+import psutil
 # import matplotlib.pyplot as plt
 
 def create_pool(cores=None):
-    cores = mp.cpu_count() if cores is None else cores
+    cores = mp.cpu_count() - 1 if cores is None else cores
     # cores = cores - 10 if cores >= 16 else cores
     print('creating %i threads' % cores)
     return mp.get_context('spawn').Pool(cores)
@@ -49,9 +50,15 @@ def bucket(data, bucket_size):
     return [ np.mean(data[i:i+bucket_size]) for i in range(0, len(data), bucket_size) ]
 
 # http://pythonforbiologists.com/index.php/measuring-memory-usage-in-python/
+def get_memory():
+    vals = psutil.virtual_memory()
+    percent_use = vals.available / vals.total
+    return percent_use
+
 def print_memory():
-    b = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss
-    print("%d mB" % (b / 1000000.0))
+    print('Percent memory usage:')
+    print(get_memory())
+
 
 def calc_precision(predictions, actual):
     if len(predictions) != len(actual):
