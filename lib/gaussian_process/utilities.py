@@ -3,6 +3,7 @@ import os
 import multiprocessing as mp
 import resource
 import psutil
+import pickle
 # import matplotlib.pyplot as plt
 
 def create_pool(cores=None):
@@ -57,7 +58,7 @@ def get_memory():
 
 def print_memory():
     print('Percent memory usage:')
-    print(get_memory())
+    print(1.0 - get_memory())
 
 
 def calc_precision(predictions, actual):
@@ -70,4 +71,10 @@ def calc_precision(predictions, actual):
                 num_correct += 1
         return num_correct / len(predictions)
 
+def save_params(name, obj, rel_path):
+    whole_path = os.path.join(rel_path, '%s.p' % name)
+    pickle.dump(obj, open(whole_path, 'wb'))
 
+def load_params(name, rel_path):
+    whole_path = os.path.join(rel_path, '%s.p' % name)
+    return pickle.load(open(whole_path, 'rb'))

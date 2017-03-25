@@ -32,7 +32,9 @@ class MNISTTrainer:
     gp.fit(train_X, train_Y)
 
     print('Predicting...')
-    predictions = gp.predict(train_X, train_Y, X) + mean_train_Y
+    predictions = gp.predict(train_X, train_Y, X)
+    print(predictions)
+    predictions += mean_train_Y
     predictions = [ int(pred) for pred in predictions ]
     # print predictions
     print(predictions)
@@ -111,4 +113,4 @@ if __name__ == '__main__':
   if len(sys.argv) > 1:
     num_exs = int(sys.argv[1])
     #mp.log_to_stderr().setLevel(mp.util.DEBUG)
-    MNISTTrainer.gaussian_process_predict(num_training_examples=num_exs, num_targets=50)
+    MNISTTrainer.gaussian_process_predict(num_training_examples=num_exs, num_targets=10)

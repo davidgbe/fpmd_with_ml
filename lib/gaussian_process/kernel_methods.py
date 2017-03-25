@@ -5,12 +5,10 @@ from functools import partial
 from .utilities import create_pool
 import multiprocessing as mp
 
-def squared_distance(v_1, v_2):
-    return np.square(v_1 - v_2)
-
 def covariance_exp_arg(x_1, x_2, hyperparams):
     example_diff = x_1 - x_2
-    return np.square(example_diff).dot(np.square(hyperparams['length_scales']))
+    arg = np.square(example_diff).dot(hyperparams['length_scales'])
+    return arg
 
 def default_covariance_func(x_1, x_2, hyperparams):
     a = hyperparams['theta_amp']**2.0
@@ -20,7 +18,7 @@ def default_covariance_func(x_1, x_2, hyperparams):
 # for varying the hyperparameters
 def covariance_mat_derivative_theta_length(x_1, x_2, hyperparams):
     l = hyperparams['theta_length']
-    return default_covariance_func(x_1, x_2, hyperparams) * np.sqrt(covariance_exp_arg(x_1, x_2, hyperparams)) / l**3.0
+    return default_covariance_func(x_1, x_2, hyperparams) * covariance_exp_arg(x_1, x_2, hyperparams) / l**3.0
 
 def covariance_mat_derivative_theta_amp(x_1, x_2, hyperparams):
     l = hyperparams['theta_length']

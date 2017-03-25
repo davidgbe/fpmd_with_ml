@@ -1,15 +1,15 @@
 import numpy as np
-from numpy.linalg import inv, norm as mag
-from math import exp, log
+from numpy.linalg import inv, det, norm as mag
+from math import exp, log, pi
 import time
-from .kernel_methods import cartesian_operation, default_covariance_func, get_gradient_funcs, squared_distance
+from .kernel_methods import cartesian_operation, default_covariance_func, get_gradient_funcs
 from functools import partial
 from copy import deepcopy
 from random import random
 from .utilities import create_pool
 
-def gradient_descent(hyperparams, X, Y, learning_rate=None, epochs=300, cached_pool=None):
-    learning_rate = default_learning_rate if learning_rate is None else learning_rate
+def gradient_descent(hyperparams, X, Y, learning_rates, learning_func=None, epochs=400, cached_pool=None):
+    learning_func = default_learning_func if learning_func is None else learning_func
 
     gradients = deepcopy(hyperparams)
     params = deepcopy(hyperparams)
@@ -38,8 +38,7 @@ def gradient_descent(hyperparams, X, Y, learning_rate=None, epochs=300, cached_p
             # compute gradient of log probability with respect to the parameter
             gradients[param_name] = gradient_log_prob(gradient_funcs[param_name], X, Y, training_cov_inv, cached_pool=cached_pool)
             # update each parameter according to learning rate and gradient
-            scale = 1.0
-            step = learning_rate(i, epochs, scale) * gradients[param_name]
+            step = learning_func(i, epochs, learning_rates[param_name]) * gradients[param_name]
             print(step, param_name)
             params[param_name] += step
         print('params:')
@@ -54,6 +53,11 @@ def gradient_descent(hyperparams, X, Y, learning_rate=None, epochs=300, cached_p
             best_hyperparams = deepcopy(params)
             best_log_prob = log_prob
         print("Completed %d" % i)
+        print('')
+    print('Best hyperparams:')
+    print(best_hyperparams)
+    print('Best log prob:')
+    print(best_log_prob)
     return (best_hyperparams, best_log_prob)
 
 def gradient_log_prob(gradient_func, X, Y, training_cov_inv, cached_pool=None):
@@ -62,17 +66,18 @@ def gradient_log_prob(gradient_func, X, Y, training_cov_inv, cached_pool=None):
     gradient_cov_mat = cartesian_operation(X, function=gradient_func, cached_pool=cached_pool)
     end = time.time()
     print('%d seconds' % (end - start))
-    term_1 = np.trace(training_cov_inv.dot(gradient_cov_mat))
+    term_1 = -1 * np.trace(training_cov_inv.dot(gradient_cov_mat))
     term_2 = Y.T.dot(training_cov_inv).dot(gradient_cov_mat).dot(training_cov_inv).dot(Y)
     return 0.5 * (term_1 + term_2)
 
 def calc_log_prob(X, Y, training_cov, training_cov_inv):
-    term_1 = Y.T.dot(training_cov_inv).dot(Y)
-    term_2 = log(mag(training_cov))
+    term_1 = log(mag(training_cov))
+    term_2 = Y.T.dot(training_cov_inv).dot(Y)
+    term_3 = len(X) / 2 * log(2 * pi)
     return -0.5 * (term_1 + term_2)
 
-def default_learning_rate(i, total, scale=0.1):
-    internal_scale = 0.1
+def default_learning_func(i, total, scale=1.0):
+    internal_scale = 0.03
     frac = float(i) / total
     total_scale = scale * internal_scale
     if frac < 0.2 :
@@ -96,17 +101,19 @@ def initial_length_scales(X):
     print("Generating %d scales" % X.shape[1])
     length_scales = X.std(0)
     length_scales[length_scales == 0.0] = 1.0
-    length_scales = np.square(np.reciprocal(length_scales))
+    print(length_scales)
+    print(X.shape[1])
+    length_scales = np.square(np.reciprocal(length_scales)) / X.shape[1]
     return length_scales.T
 
-def optimize_hyperparams(params, X, Y, rand_restarts=1):
+def optimize_hyperparams(params, X, Y, learning_rates, rand_restarts=1):
     print('Optimizing hyperparams...')
     pool = create_pool()
     best_candidate = None
     for i in range(0, rand_restarts):
         new_params = generate_random_hyperparams(params)
         try: 
-            candidate = gradient_descent(new_params, X, Y, cached_pool=pool)
+            candidate = gradient_descent(new_params, X, Y, learning_rates, cached_pool=pool)
             # if new candidates log prob is higher than best candidate's
             if best_candidate is None or candidate[1] > best_candidate[1]:
                 best_candidate = candidate

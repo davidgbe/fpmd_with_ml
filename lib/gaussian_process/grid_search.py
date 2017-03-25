@@ -6,7 +6,7 @@ from .kernel_methods import cartesian_operation, default_covariance_func
 from functools import partial
 from .utilities import create_pool, print_memory
 
-def grid_search(X, Y, params, fixed_params, segs_per_order_mag=3):
+def grid_search(X, Y, params, fixed_params, segs_per_order_mag=4):
     total_iterations = 1
     for p in params:
         print(p)
@@ -24,6 +24,7 @@ def grid_search(X, Y, params, fixed_params, segs_per_order_mag=3):
     orders_for_params = list(params.values())
     count = 0
     for param_set in gen_params(param_names, orders_for_params, segs_per_order_mag):
+        print(param_set)
         print_memory()
         print("%d percent complete" % (float(count) / total_iterations * 100))
         print()
@@ -70,7 +71,7 @@ def iterate_for_params(orders, segs_per_order_mag, vals_for_iter=[]):
             curr_order = min(orders_for_param[0], orders_for_param[1]) + i
             for j in range(segs_per_order_mag):
                 new_vals_for_iter = deepcopy(vals_for_iter)
-                new_vals_for_iter.append(10**curr_order * (1 + j / segs_per_order_mag))
+                new_vals_for_iter.append(10**curr_order * (1 + 9 * j / segs_per_order_mag))
                 for vals in iterate_for_params(orders, segs_per_order_mag, new_vals_for_iter):
                     yield vals
 
