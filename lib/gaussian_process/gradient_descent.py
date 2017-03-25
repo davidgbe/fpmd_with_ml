@@ -8,7 +8,7 @@ from copy import deepcopy
 from random import random
 from .utilities import create_pool, print_memory
 
-def gradient_descent(hyperparams, X, Y, learning_rate=None, epochs=100, cached_pool=None):
+def gradient_descent(hyperparams, X, Y, learning_rate=None, epochs=300, cached_pool=None):
     learning_rate = default_learning_rate if learning_rate is None else learning_rate
 
     gradients = deepcopy(hyperparams)
@@ -96,7 +96,6 @@ def generate_random_hyperparams(params, randomize=[]):
 def initial_length_scales(X):
     print("Generating %d scales" % X.shape[1])
     length_scales = X.std(0)
-    print_memory()
     length_scales[length_scales == 0.0] = 1.0
     length_scales = np.square(np.reciprocal(length_scales))
     return length_scales.T
