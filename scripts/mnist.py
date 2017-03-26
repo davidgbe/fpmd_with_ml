@@ -19,7 +19,7 @@ class MNISTTrainer:
 
     train_Y = MNISTTrainer.load_labels('../datasets/mnist/train-labels-idx1-ubyte', num_training_examples)
     (train_X, mean_train_X) = utilities.zero_mean(train_X)
-    (train_Y, mean_train_Y) = utilities.zero_mean(train_Y)
+    (train_Y, mean_train_Y, std_train_Y) = utilities.normalize(train_Y)
 
     X = MNISTTrainer.load_images_dataset('../datasets/mnist/t10k-images-idx3-ubyte', num_targets)
     X = X[:, ~zero_cols]
@@ -28,13 +28,13 @@ class MNISTTrainer:
 
     gp = GP()
 
-    print('Training...')
-    gp.fit(train_X, train_Y)
+    # print('Training...')
+    # gp.fit(train_X, train_Y)
 
     print('Predicting...')
     predictions = gp.predict(train_X, train_Y, X)
     print(predictions)
-    predictions += mean_train_Y
+    predictions = predictions * std_train_Y + mean_train_Y
     predictions = [ int(pred) for pred in predictions ]
     # print predictions
     print(predictions)
@@ -113,4 +113,4 @@ if __name__ == '__main__':
   if len(sys.argv) > 1:
     num_exs = int(sys.argv[1])
     #mp.log_to_stderr().setLevel(mp.util.DEBUG)
-    MNISTTrainer.gaussian_process_predict(num_training_examples=num_exs, num_targets=10)
+    MNISTTrainer.gaussian_process_predict(num_training_examples=num_exs, num_targets=50)

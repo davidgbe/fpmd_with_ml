@@ -6,14 +6,13 @@ from .kernel_methods import cartesian_operation, default_covariance_func, get_gr
 from functools import partial
 from copy import deepcopy
 from random import random
-from .utilities import create_pool
+from .utilities import create_pool, save_scatter
 
-def gradient_descent(hyperparams, X, Y, learning_rates, learning_func=None, epochs=400, cached_pool=None):
+def gradient_descent(hyperparams, X, Y, learning_rates, learning_func=None, epochs=5, cached_pool=None):
     learning_func = default_learning_func if learning_func is None else learning_func
 
     gradients = deepcopy(hyperparams)
     params = deepcopy(hyperparams)
-    log_probs = deepcopy(hyperparams)
     covariance_func = partial(default_covariance_func, hyperparams=params)
     gradient_funcs = get_gradient_funcs(params)
     log_prob = -np.inf
@@ -25,6 +24,7 @@ def gradient_descent(hyperparams, X, Y, learning_rates, learning_func=None, epoc
     training_cov_inv = inv(training_cov)
     new_log_prob = calc_log_prob(X, Y, training_cov, training_cov_inv)
     print('INITIAL LOG PROB', new_log_prob)
+    all_log_probs = []
 
     # for number of epochs
     for i in range(epochs):
@@ -34,6 +34,8 @@ def gradient_descent(hyperparams, X, Y, learning_rates, learning_func=None, epoc
         # for each hyperparameter
         for param_name in hyperparams:
             if not param_name.startswith('theta'):
+                continue
+            if param_name == 'theta_length':
                 continue
             # compute gradient of log probability with respect to the parameter
             gradients[param_name] = gradient_log_prob(gradient_funcs[param_name], X, Y, training_cov_inv, cached_pool=cached_pool)
@@ -48,6 +50,9 @@ def gradient_descent(hyperparams, X, Y, learning_rates, learning_func=None, epoc
         print('log_prob:')
         new_log_prob = calc_log_prob(X, Y, training_cov, training_cov_inv)
         print(new_log_prob)
+        all_log_probs.append(new_log_prob)
+        if i % 20:
+            save_scatter('log_prob', all_log_probs)
         log_prob = new_log_prob
         if log_prob > best_log_prob:
             best_hyperparams = deepcopy(params)
@@ -77,17 +82,19 @@ def calc_log_prob(X, Y, training_cov, training_cov_inv):
     return -0.5 * (term_1 + term_2)
 
 def default_learning_func(i, total, scale=1.0):
-    internal_scale = 0.03
+    internal_scale = 1.0
     frac = float(i) / total
     total_scale = scale * internal_scale
-    if frac < 0.2 :
-        return 1.0 * total_scale
-    elif frac < 0.5:
-        return 0.5 * total_scale
-    elif frac < 0.95:
+    if frac < 0.1 :
+        return 1.5 * total_scale
+    elif frac < 0.2:
         return 0.1 * total_scale
-    else:
+    elif frac < 0.35:
         return 0.05 * total_scale
+    elif frac < 0.45:
+        return 0.01 * total_scale
+    else:
+        return 0.003 * total_scale
 
 def generate_random_hyperparams(params, randomize=[]):
     rand_params = deepcopy(params)
@@ -101,8 +108,6 @@ def initial_length_scales(X):
     print("Generating %d scales" % X.shape[1])
     length_scales = X.std(0)
     length_scales[length_scales == 0.0] = 1.0
-    print(length_scales)
-    print(X.shape[1])
     length_scales = np.square(np.reciprocal(length_scales)) / X.shape[1]
     return length_scales.T
 

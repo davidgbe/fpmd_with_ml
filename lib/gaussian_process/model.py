@@ -13,7 +13,7 @@ class GaussianProcess:
     def __init__(self, covariance_func=None, use_saved_params=False):
         self.covariance_func = default_covariance_func if covariance_func is None else covariance_func
         self.hyperparams = {'theta_amp': 1.0, 'theta_length': 1.0}
-        self.learning_rates = {'theta_amp': 1.0, 'theta_length': 1.0}
+        self.learning_rates = {'theta_amp': 0.001, 'theta_length': 0.0005}
         self.cache_path = os.path.join(os.getcwd(), 'params')
         self.covariance_func = partial(self.covariance_func, hyperparams=self.hyperparams)
         self.use_saved_params = use_saved_params
@@ -49,14 +49,14 @@ class GaussianProcess:
 
     def fit(self, X, Y):
         print('Generating length scales...')
-        if not self.use_saved_params:
-            self.generate_length_scales(X)
-            fixed_params = { 'length_scales': self.hyperparams['length_scales'] }
-            self.hyperparams = grid_search(X, Y, { 'theta_amp': [-2, 2], 'theta_length': [-2, 2] }, fixed_params)
-            self.save_params('hyperparams', self.hyperparams)
-        else:
-            self.hyperparams = self.load_params('hyperparams')
-            self.generate_length_scales(X)
+        self.generate_length_scales(X)
+        # if not self.use_saved_params:
+        #     fixed_params = { 'length_scales': self.hyperparams['length_scales'], 'theta_length': 1.0 }
+        #     self.hyperparams = grid_search(X, Y, { 'theta_amp': [0, 1] }, fixed_params)
+        #     self.save_params('hyperparams', self.hyperparams)
+        # else:
+        #     self.hyperparams = self.load_params('hyperparams')
+        #     self.generate_length_scales(X)
         print('Finished generating length scales')
         self.covariance_func = partial(self.covariance_func, hyperparams=self.hyperparams)
         self.hyperparams = optimize_hyperparams(self.hyperparams, X, Y, self.learning_rates)

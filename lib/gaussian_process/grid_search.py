@@ -6,7 +6,7 @@ from .kernel_methods import cartesian_operation, default_covariance_func
 from functools import partial
 from .utilities import create_pool, print_memory
 
-def grid_search(X, Y, params, fixed_params, segs_per_order_mag=4):
+def grid_search(X, Y, params, fixed_params, segs_per_order_mag=40):
     total_iterations = 1
     for p in params:
         print(p)
@@ -21,12 +21,12 @@ def grid_search(X, Y, params, fixed_params, segs_per_order_mag=4):
     pool = create_pool()
 
     param_names = list(params.keys())
-    orders_for_params = list(params.values())
+    orders_for_params = [params[param_name] for param_name in param_names]
     count = 0
     for param_set in gen_params(param_names, orders_for_params, segs_per_order_mag):
         print(param_set)
         print_memory()
-        print("%d percent complete" % (float(count) / total_iterations * 100))
+        #print("%d percent complete" % (float(count) / total_iterations * 100))
         print()
         param_set.update(fixed_params)
         #print_params(param_set)
@@ -34,7 +34,8 @@ def grid_search(X, Y, params, fixed_params, segs_per_order_mag=4):
         training_cov = cartesian_operation(X, function=covariance_func, cached_pool=pool)
         training_cov_inv = inv(training_cov)
         log_prob = calc_log_prob(X, Y, training_cov, training_cov_inv)
-        #print("log prob: %d" % log_prob)
+        print("log prob:")
+        print(log_prob)
 
         count += 1
 
@@ -43,6 +44,9 @@ def grid_search(X, Y, params, fixed_params, segs_per_order_mag=4):
             best_param_set = param_set
     pool.close()
     pool.join()
+
+    for p_name in best_param_set:
+        best_param_set[p_name] = abs(best_param_set[p_name])
 
     print('best param set:')
     print_params(best_param_set)
