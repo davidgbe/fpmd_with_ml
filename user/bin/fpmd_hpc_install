@@ -1,4 +1,3 @@
 #!/bin/bash
 
-mkdir /tmp/dependencies
 python3 -m pip install --target='/tmp/dependencies' -r requirements.txt
