@@ -1,5 +1,5 @@
 import numpy as np
-from numpy.linalg import inv, norm as mag
+from numpy.linalg import pinv, norm as mag
 from math import exp
 import time
 from .gradient_descent import optimize_hyperparams, initial_length_scales
@@ -30,7 +30,7 @@ class GaussianProcess:
     def batch_predict(self, X, Y, target_X):
         pool = create_pool()
         training_cov = cartesian_operation(X, function=self.covariance_func, cached_pool=pool)
-        training_cov_inv = inv(training_cov)
+        training_cov_inv = pinv(training_cov)
         Y_t = Y.reshape(Y.size, 1)
 
         predictions = np.apply_along_axis(self.single_predict, 1, target_X, training_cov_inv, Y_t, X, pool)
