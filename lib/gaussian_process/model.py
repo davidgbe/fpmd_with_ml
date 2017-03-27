@@ -50,13 +50,13 @@ class GaussianProcess:
     def fit(self, X, Y):
         print('Generating length scales...')
         self.generate_length_scales(X)
-        # if not self.use_saved_params:
-        #     fixed_params = { 'length_scales': self.hyperparams['length_scales'], 'theta_length': 1.0 }
-        #     self.hyperparams = grid_search(X, Y, { 'theta_amp': [0, 1] }, fixed_params)
-        #     self.save_params('hyperparams', self.hyperparams)
-        # else:
-        #     self.hyperparams = self.load_params('hyperparams')
-        #     self.generate_length_scales(X)
+        if not self.use_saved_params:
+            fixed_params = { 'length_scales': self.hyperparams['length_scales'], 'theta_length': 1.0 }
+            self.hyperparams = grid_search(X, Y, { 'theta_amp': [0, 1] }, fixed_params)
+            self.save_params('hyperparams', self.hyperparams)
+        else:
+            self.hyperparams = self.load_params('hyperparams')
+            self.generate_length_scales(X)
         print('Finished generating length scales')
         self.covariance_func = partial(self.covariance_func, hyperparams=self.hyperparams)
         self.hyperparams = optimize_hyperparams(self.hyperparams, X, Y, self.learning_rates)
