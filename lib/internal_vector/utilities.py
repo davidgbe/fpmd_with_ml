@@ -1,6 +1,6 @@
 import numpy as np
 from math import exp
-from numpy.linalg import norm
+from numpy.linalg import norm, pinv
 
 def produce_internal_basis(atomic_config_mat, r_cut=1.0, p=1.0):
     num_neighbors = atomic_config_mat.shape[0]
@@ -23,3 +23,7 @@ def produce_feature_matrix(basis_mat):
     mags = mags.reshape(mags.shape[0], 1)
     v_norm_trans = np.divide(basis_mat, mags).T
     return basis_mat.dot(v_norm_trans)
+
+def transform_to_basis(real_vecs, basis_trans):
+    trans = lambda v: basis_trans.dot(v)
+    return np.apply_along_axis(trans, 1, real_vecs)
