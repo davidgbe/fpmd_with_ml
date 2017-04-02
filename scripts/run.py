@@ -1,18 +1,9 @@
 import numpy as np
 from lib.gaussian_process.kernel_methods import cartesian_operation
 import multiprocessing
+from lib.internal_vector import utilities
 
-def func(x, y):
-  return np.dot(x, y)
+a = np.mat([[1, 2, 3], [2, 4, 5], [6, 7, 3], [2, 4, 8]])
+v = utilities.produce_internal_basis(a)
+print(utilities.produce_feature_matrix(v))
 
-X = np.array([[1, 2], [3, 4], [5, 6], [7, 8]])
-
-print(X.shape)
-print(multiprocessing.cpu_count())
-
-mat = cartesian_operation(X, function=func)
-print(mat)
-print(mat.shape)
-Y = np.array([1, 3, 5])
-
-target = np.array([[1, 2], [1, 3], [3, 5]])
