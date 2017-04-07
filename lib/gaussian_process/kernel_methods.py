@@ -74,6 +74,7 @@ def cartesian_operation(X_1, X_2=None, function=None, cores=None, cached_pool=No
 
     if cached_pool is None:
         pool.close()
+        pool.join()
 
     chunks_num_1 = int(ceil(float(rows_1) / chunk_size_1))
     chunks_num_2 = int(ceil(float(rows_2) / chunk_size_2))

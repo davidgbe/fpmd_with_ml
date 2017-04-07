@@ -27,16 +27,24 @@ class GaussianProcess:
         #stdevs = target_cov - training_target_cov.T.dot(training_cov_inv).dot(training_target_cov)
         return mean.reshape(1)
 
-    def batch_predict(self, X, Y, target_X):
-        pool = create_pool()
-        training_cov = cartesian_operation(X, function=self.covariance_func, cached_pool=pool)
+    def batch_predict(self, X, Y, target_X, batch_size=20):
+        training_cov = cartesian_operation(X, function=self.covariance_func)
         training_cov_inv = pinv(training_cov)
         Y_t = Y.reshape(Y.size, 1)
+        predictions = []
 
-        predictions = np.apply_along_axis(self.single_predict, 1, target_X, training_cov_inv, Y_t, X, pool)
-        pool.close()
-        (rows, cols) = predictions.shape
-        return predictions.reshape(rows*cols)
+        for i in range(0, target_X.shape[0], batch_size):
+            pool = create_pool()
+            batch = []
+            end = i + batch_size if (i + batch_size) < target_X.shape[0] else target_X.shape[0]
+            print(end)
+            for j in range(i, end):
+                batch.append(self.single_predict(target_X[j], training_cov_inv, Y_t, X, pool))
+            pool.close()
+            pool.join()
+            predictions = predictions + batch
+
+        return np.array(predictions)
 
     def generate_length_scales(self, X):
         self.hyperparams['length_scales'] = initial_length_scales(X)
