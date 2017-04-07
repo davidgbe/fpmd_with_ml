@@ -35,10 +35,8 @@ def operation_on_chunk(chunks, function, func_input_size):
 
 # runs an operation iteratively for every pair selected from X_1 and X_2
 # distributes work across cores provided
-def cartesian_operation(X_1, X_2=None, function=None, cores=None, cached_pool=None, max_chunk_size=500):
-    pool = cached_pool
-    cores = mp.cpu_count() if cores is None else cores
-    pool = create_pool(cores) if pool is None else pool
+def cartesian_operation(X_1, X_2=None, function=None, cores=None, cached_pool=None, max_chunk_size=500, max_concurrent=10):
+    cores = mp.cpu_count() - 1 if cores is None else cores
     # must change this to be a parametrized func
     function = default_covariance_func if (function is None) else function
     if X_2 is None:
@@ -61,20 +59,25 @@ def cartesian_operation(X_1, X_2=None, function=None, cores=None, cached_pool=No
     iter_size_1 = chunk_size_1 * cols
     iter_size_2 = chunk_size_2 * cols
 
-    async_results = []
-
+    all_chunks = []
     for i in range(0, rows_1, chunk_size_1):
         for j in range(0, rows_2, chunk_size_2):
             chunk_i = flattened_1[ (cols * i) : ((cols * i) + iter_size_1) ]
             chunk_j = flattened_2[ (cols * j) : ((cols * j) + iter_size_2) ]
-            async_results.append((chunk_i, chunk_j))
+            all_chunks.append((chunk_i, chunk_j))
 
     operation = partial(operation_on_chunk, function=function, func_input_size=cols)
-    async_results = pool.map_async(operation, async_results).get()
 
-    if cached_pool is None:
-        pool.close()
-        pool.join()
+    async_results = []
+    if cached_pool is not None:
+        async_results = cached_pool.map_async(operation, all_chunks).get()
+    else:
+        for i in range(0, len(all_chunks), max_concurrent):
+            pool = create_pool()
+            async_results.append(pool.map_async(operation, all_chunks[i:i+max_concurrent]).get())
+            pool.close()
+            pool.join()
+        async_results = [result for result_block in async_results for result in result_block]
 
     chunks_num_1 = int(ceil(float(rows_1) / chunk_size_1))
     chunks_num_2 = int(ceil(float(rows_2) / chunk_size_2))
