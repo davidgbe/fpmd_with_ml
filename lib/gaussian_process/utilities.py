@@ -10,7 +10,7 @@ def create_pool(cores=None):
     cores = mp.cpu_count() - 1 if cores is None else cores
     # cores = cores - 10 if cores >= 16 else cores
     print('creating %i threads' % cores)
-    return mp.get_context('spawn').Pool(cores)
+    return mp.Pool(cores)
 
 def normalize(mat):
     mean = mat.mean(0)
