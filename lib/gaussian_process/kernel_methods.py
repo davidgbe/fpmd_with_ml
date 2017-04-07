@@ -2,7 +2,7 @@ import numpy as np
 from numpy.linalg import norm as mag
 from math import exp, ceil, sqrt
 from functools import partial
-from .utilities import create_pool
+from .utilities import create_pool, print_memory
 import multiprocessing as mp
 
 def covariance_exp_arg(x_1, x_2, hyperparams):
@@ -36,6 +36,7 @@ def operation_on_chunk(chunks, function, func_input_size):
 # runs an operation iteratively for every pair selected from X_1 and X_2
 # distributes work across cores provided
 def cartesian_operation(X_1, X_2=None, function=None, cores=None, cached_pool=None, max_chunk_size=300, max_concurrent=15):
+    print_memory()
     cores = mp.cpu_count() - 1 if cores is None else cores
     # must change this to be a parametrized func
     function = default_covariance_func if (function is None) else function
@@ -73,6 +74,7 @@ def cartesian_operation(X_1, X_2=None, function=None, cores=None, cached_pool=No
         async_results = cached_pool.map_async(operation, all_chunks).get()
     else:
         for i in range(0, len(all_chunks), max_concurrent):
+            print_memory()
             pool = create_pool(max_concurrent)
             async_results.append(pool.map_async(operation, all_chunks[i:i+max_concurrent]).get())
             pool.close()
