@@ -3,8 +3,7 @@
 cd fpmd_with_ml
 chmod u+x user/bin/*
 source fpmd_run
-mkdir -p /tmp/bell_pip_dependencies
-python3 -m pip install -U pip
+mkdir -p /staging/dgb/davidgbe/pip_dependencies
 fpmd_hpc_install
 
 python3 ./scripts/mnist.py 300
