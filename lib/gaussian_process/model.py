@@ -30,6 +30,7 @@ class GaussianProcess:
     def batch_predict(self, X, Y, target_X, batch_size=20):
         training_cov = cartesian_operation(X, function=self.covariance_func)
         training_cov_inv = pinv(training_cov)
+        print('Finished matrix inversion')
         Y_t = Y.reshape(Y.size, 1)
         predictions = []
 
