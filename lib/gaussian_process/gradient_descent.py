@@ -6,7 +6,7 @@ from .kernel_methods import cartesian_operation, default_covariance_func, get_gr
 from functools import partial
 from copy import deepcopy
 from random import random
-from .utilities import create_pool, save_scatter
+from .utilities import create_pool
 
 def gradient_descent(hyperparams, X, Y, learning_rates, learning_func=None, epochs=5, cached_pool=None):
     learning_func = default_learning_func if learning_func is None else learning_func
@@ -51,8 +51,8 @@ def gradient_descent(hyperparams, X, Y, learning_rates, learning_func=None, epoc
         new_log_prob = calc_log_prob(X, Y, training_cov, training_cov_inv)
         print(new_log_prob)
         all_log_probs.append(new_log_prob)
-        if i % 20:
-            save_scatter('log_prob', all_log_probs)
+        # if i % 20:
+        #     save_scatter('log_prob', all_log_probs)
         log_prob = new_log_prob
         if log_prob > best_log_prob:
             best_hyperparams = deepcopy(params)
