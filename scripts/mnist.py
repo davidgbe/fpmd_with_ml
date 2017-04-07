@@ -34,7 +34,7 @@ class MNISTTrainer:
     print('Predicting...')
     predictions = gp.predict(train_X, train_Y, X)
     predictions = predictions * std_train_Y + mean_train_Y
-    predictions = [ int(pred) for pred in predictions ]
+    predictions = [ round(pred) for pred in predictions ]
     print(predictions)
     print(Y)
     print(utilities.calc_precision(predictions, Y))
