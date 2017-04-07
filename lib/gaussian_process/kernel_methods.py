@@ -35,7 +35,7 @@ def operation_on_chunk(chunks, function, func_input_size):
 
 # runs an operation iteratively for every pair selected from X_1 and X_2
 # distributes work across cores provided
-def cartesian_operation(X_1, X_2=None, function=None, cores=None, cached_pool=None, max_chunk_size=300, max_concurrent=15):
+def cartesian_operation(X_1, X_2=None, function=None, cores=None, cached_pool=None, max_chunk_size=300, max_concurrent=None):
     cores = mp.cpu_count() - 1 if cores is None else cores
     # must change this to be a parametrized func
     function = default_covariance_func if (function is None) else function
@@ -72,6 +72,7 @@ def cartesian_operation(X_1, X_2=None, function=None, cores=None, cached_pool=No
     if cached_pool is not None:
         async_results = cached_pool.map_async(operation, all_chunks).get()
     else:
+        max_concurrent = cores if max_concurrent is None else max_concurrent
         for i in range(0, len(all_chunks), max_concurrent):
             pool = create_pool(max_concurrent)
             async_results.append(pool.map_async(operation, all_chunks[i:i+max_concurrent]).get())
