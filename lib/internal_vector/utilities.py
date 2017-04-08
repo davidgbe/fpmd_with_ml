@@ -3,6 +3,7 @@ from math import exp
 from numpy.linalg import norm, pinv
 
 def produce_internal_basis(atomic_config_mat, r_cut=1.0, p=1.0):
+    print(atomic_config_mat)
     num_neighbors = atomic_config_mat.shape[0]
     print(num_neighbors)
     new_basis = []
@@ -11,7 +12,9 @@ def produce_internal_basis(atomic_config_mat, r_cut=1.0, p=1.0):
         internal_basis_vec = np.zeros(3).reshape(1, 3)
         for row in range(num_neighbors):
             if row != origin_row:
-                displacement_vec = (atomic_config_mat[row] - origin_vec).reshape(origin_vec.shape[1])
+                print(atomic_config_mat[row])
+                print(origin_vec)
+                displacement_vec = np.subtract(atomic_config_mat[row], origin_vec).reshape(origin_vec.shape[1])
                 mag_displacement = norm(displacement_vec)
                 unit = displacement_vec / mag_displacement
                 internal_basis_vec += (unit * exp(-1*(mag_displacement / r_cut)**p))
