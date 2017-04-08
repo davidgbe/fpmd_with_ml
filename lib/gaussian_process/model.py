@@ -5,7 +5,7 @@ import time
 from .gradient_descent import optimize_hyperparams, initial_length_scales
 from .kernel_methods import default_covariance_func, cartesian_operation
 from functools import partial
-from .utilities import create_pool, save_params, load_params
+from .utilities import create_pool, save_params, load_params, zero_mean, normalize
 from .grid_search import grid_search
 import os
 
@@ -51,10 +51,23 @@ class GaussianProcess:
         self.hyperparams['length_scales'] = initial_length_scales(X)
 
     def predict(self, X, Y, target_X):
+        # strip out features that only have one value
+        zero_cols = np.array((X.std(0) == 0.0))
+        zero_cols = zero_cols.reshape(zero_cols.shape[1])
+        X = X[:, ~zero_cols]
+
+        # preprocess training X and Y
+        (X, mean_X) = zero_mean(X)
+        (Y, mean_Y, std_Y) = normalize(Y)
+
+        # remove features that didn't vary in the training set from test set
+        target_X = target_X[:, ~zero_cols]
+        target_X = target_X - mean_X
+
         if 'length_scales' not in self.hyperparams:
             self.generate_length_scales(X)
         #self.hyperparams['length_scales'] = initial_length_scales(X[:20])
-        return self.batch_predict(X, Y, target_X)
+        return (self.batch_predict(X, Y, target_X) * std_Y + mean_Y)
 
     def fit(self, X, Y):
         print('Generating length scales...')
