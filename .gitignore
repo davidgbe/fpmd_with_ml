@@ -3,3 +3,4 @@ bin
 */**/*.pyc
 pyvenv.cfg
 lib/python3.5
+datasets/**/*
