@@ -2,4 +2,6 @@ bin
 !/user/bin
 */**/*.pyc
 pyvenv.cfg
+lib/python3.6
 lib/python3.5
+datasets/**/*

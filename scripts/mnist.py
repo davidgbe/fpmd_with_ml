@@ -13,18 +13,10 @@ class MNISTTrainer:
   @staticmethod
   def gaussian_process_predict(num_training_examples=None, num_targets=None):
     train_X = MNISTTrainer.load_images_dataset('../datasets/mnist/train-images-idx3-ubyte', num_training_examples)
-    zero_cols = np.array((train_X.std(0) == 0.0))
-    zero_cols = zero_cols.reshape(zero_cols.shape[1])
-    train_X = train_X[:, ~zero_cols]
-
     train_Y = MNISTTrainer.load_labels('../datasets/mnist/train-labels-idx1-ubyte', num_training_examples)
-    (train_X, mean_train_X) = utilities.zero_mean(train_X)
-    (train_Y, mean_train_Y, std_train_Y) = utilities.normalize(train_Y)
 
     X = MNISTTrainer.load_images_dataset('../datasets/mnist/t10k-images-idx3-ubyte', num_targets)
-    X = X[:, ~zero_cols]
     Y = MNISTTrainer.load_labels('../datasets/mnist/t10k-labels-idx1-ubyte', num_targets)
-    X = X - mean_train_X
 
     gp = GP()
 
@@ -33,7 +25,6 @@ class MNISTTrainer:
 
     print('Predicting...')
     predictions = gp.predict(train_X, train_Y, X)
-    predictions = predictions * std_train_Y + mean_train_Y
     predictions = [ round(pred[0], 0) for pred in predictions ]
     print(predictions)
     print(Y)
