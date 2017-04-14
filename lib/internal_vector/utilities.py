@@ -21,8 +21,30 @@ def produce_feature_matrix(basis_mat):
     mags = np.apply_along_axis(norm, 1, basis_mat)
     mags = mags.reshape(mags.shape[0], 1)
     v_norm_trans = np.divide(basis_mat, mags).T
-    return basis_mat.dot(v_norm_trans)
+    return basis_mat.dot(v_norm_trans).reshape((basis_mat.shape[0])**2, 1)
 
 def transform_to_basis(real_vecs, basis_trans):
     trans = lambda v: basis_trans.dot(v)
     return np.apply_along_axis(trans, 1, real_vecs)
+
+def compute_feature_mat_scale_factors(feature_mats):
+    stdevs = []
+    k = int(np.sqrt(feature_mats[0].shape[0]))
+
+    print(feature_mats.shape)
+    print(feature_mats.std(0).shape)
+    for i in range(feature_mats[0].shape[0]):
+        stdevs.append(np.concatenate([feature_mats[j][i] for j in range(len(feature_mats))], axis=0).std())
+    return np.array(stdevs)
+
+def compute_iv_distance(x_1, x_2, stdevs):
+    dist = 0
+    if x_1.shape != x_2.shape:
+        raise ValueError('Features matrices must have the same dimensions!')
+    k = int(np.sqrt(x_2.shape[0]))
+    for row in range(k):
+        scale_factor = stdevs[row]
+        for col in range(k):
+            dist += ((x_1[k*row + col] - x_2[k*row + col]) / scale_factor)**2
+    dist /= k
+    return np.sqrt(dist)

@@ -2,32 +2,43 @@ import csv
 from lib.gaussian_process import utilities
 import numpy as np
 from lib.internal_vector import utilities as iv_utilities
+from lib.gaussian_process.model import GaussianProcess as GP
 
 class MDForcesPredictor:
     @staticmethod
     def predict():
-        pass
+        start = 0
+        end = 99
+        internal_reps = MDForcesPredictor.load_data('../datasets/md/iv_reps_2.txt')
+        forces = MDForcesPredictor.load_data('../datasets/md/forcefile_5000step_256part.txt', start, end)
+        forces_k_space = MDForcesPredictor.convert_forces_to_internal(forces, internal_reps)
 
+        feature_mats = MDForcesPredictor.produce_feature_mats(internal_reps)
+
+        gp = GP()
+
+        print(feature_mats.shape)
+
+        gp.predict(feature_mats[:90], forces_k_space[:90], feature_mats[90:])
 
     @staticmethod
     def produce_internal():
         start = 0
-        end = 4000
+        end = 100
         internal_reps = MDForcesPredictor.load_arrangements_in_internal('../datasets/md/posfile_5000step_256part.txt', start, end)
-        #forces = MDForcesPredictor.load_data('../datasets/md/forcefile_5000step_256part.txt', start, end)
 
-        MDForcesPredictor.write_data('../datasets/md/iv_reps.txt', internal_reps)
+        MDForcesPredictor.write_data('../datasets/md/iv_reps_2.txt', internal_reps)
 
     @staticmethod
     def produce_feature_mats(internal_reps):
-        return list(map(lambda x: iv_utilities.produce_feature_matrix(x), internal_reps))
+        return np.concatenate(list(map(lambda x: iv_utilities.produce_feature_matrix(x), internal_reps)), axis=1)
 
     @staticmethod
     def convert_forces_to_internal(forces, internal_reps):
         forces_k_space = []
         for i in range(len(forces)):
             forces_k_space.append(internal_reps[i].dot(forces[i].T))
-        return forces_k_space
+        return np.concatenate(forces_k_space, axis=1)
 
     @staticmethod
     def load_arrangements_in_internal(rel_path, start=0, end=None):
@@ -70,4 +81,4 @@ class MDForcesPredictor:
                 csv_writer.writerow(example[i])
         data_file.close()
 
-MDForcesPredictor.produce_internal()
+MDForcesPredictor.predict()
