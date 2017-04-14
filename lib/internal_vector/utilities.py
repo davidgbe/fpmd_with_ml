@@ -21,7 +21,7 @@ def produce_feature_matrix(basis_mat):
     mags = np.apply_along_axis(norm, 1, basis_mat)
     mags = mags.reshape(mags.shape[0], 1)
     v_norm_trans = np.divide(basis_mat, mags).T
-    return basis_mat.dot(v_norm_trans).reshape((basis_mat.shape[0])**2, 1)
+    return basis_mat.dot(v_norm_trans).reshape(1, (basis_mat.shape[0])**2)
 
 def transform_to_basis(real_vecs, basis_trans):
     trans = lambda v: basis_trans.dot(v)
@@ -30,11 +30,12 @@ def transform_to_basis(real_vecs, basis_trans):
 def compute_feature_mat_scale_factors(feature_mats):
     stdevs = []
     k = int(np.sqrt(feature_mats[0].shape[0]))
-
-    print(feature_mats.shape)
-    print(feature_mats.std(0).shape)
-    for i in range(feature_mats[0].shape[0]):
-        stdevs.append(np.concatenate([feature_mats[j][i] for j in range(len(feature_mats))], axis=0).std())
+    feature_variances = np.square(feature_mats.std(0))
+    for i in range(k):
+        row_variance = 0
+        for j in range(k):
+            row_variance += feature_variances[i + k * j]
+        stdevs.append(np.sqrt(row_variance))
     return np.array(stdevs)
 
 def compute_iv_distance(x_1, x_2, stdevs):
