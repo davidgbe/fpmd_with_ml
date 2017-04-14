@@ -7,13 +7,7 @@ import multiprocessing as mp
 from lib.internal_vector.utilities import compute_iv_distance
 
 def covariance_exp_arg(x_1, x_2, hyperparams):
-    example_diff = None
-    if type(x_1) is not float:
-        example_diff = compute_iv_distance(x_1, x_2, hyperparams['iv_dist_scales'])
-    else:
-        example_diff = x_1 - x_2
-    arg = np.square(example_diff).dot(hyperparams['length_scales'])
-    return arg
+    return compute_iv_distance(x_1, x_2, hyperparams['iv_dist_scales'])
 
 def default_covariance_func(x_1, x_2, hyperparams):
     a = hyperparams['theta_amp']**2.0

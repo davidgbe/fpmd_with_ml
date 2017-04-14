@@ -52,23 +52,28 @@ class GaussianProcess:
         self.hyperparams['length_scales'] = initial_length_scales(X)
 
     def predict(self, X, Y, target_X):
-        # strip out features that only have one value
+        # find features that don't vary in training data
         zero_cols = np.array((X.std(0) == 0.0))
         zero_cols = zero_cols.reshape(zero_cols.shape[0])
-        X = X[:, ~zero_cols]
+
+        if zero_cols.shape[0] != 0:
+            # strip out features that only have one value
+            X = X[:, ~zero_cols]
+            # remove features that didn't vary in the training set from test set
+            target_X = target_X[:, ~zero_cols]
 
         # preprocess training X and Y
         (X, mean_X) = zero_mean(X)
         (Y, mean_Y, std_Y) = normalize(Y)
 
-        # remove features that didn't vary in the training set from test set
-        target_X = target_X[:, ~zero_cols]
+        # preprocess target data
         target_X = target_X - mean_X
 
         if 'length_scales' not in self.hyperparams:
             self.generate_length_scales(X)
 
         self.hyperparams['iv_dist_scales'] = compute_feature_mat_scale_factors(X)
+        print(self.hyperparams['iv_dist_scales'].shape)
 
         #self.hyperparams['length_scales'] = initial_length_scales(X[:20])
         return (self.batch_predict(X, Y, target_X) * std_Y + mean_Y)

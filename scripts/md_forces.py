@@ -12,14 +12,15 @@ class MDForcesPredictor:
         internal_reps = MDForcesPredictor.load_data('../datasets/md/iv_reps_2.txt')
         forces = MDForcesPredictor.load_data('../datasets/md/forcefile_5000step_256part.txt', start, end)
         forces_k_space = MDForcesPredictor.convert_forces_to_internal(forces, internal_reps)
-
         feature_mats = MDForcesPredictor.produce_feature_mats(internal_reps)
 
         gp = GP()
 
         print(feature_mats.shape)
+        print(forces_k_space.shape)
 
-        gp.predict(feature_mats[:90], forces_k_space[:90], feature_mats[90:])
+        predictions = gp.predict(feature_mats[:90], forces_k_space[:90], feature_mats[98:])
+        print(predictions)
 
     @staticmethod
     def produce_internal():
@@ -31,14 +32,14 @@ class MDForcesPredictor:
 
     @staticmethod
     def produce_feature_mats(internal_reps):
-        return np.concatenate(list(map(lambda x: iv_utilities.produce_feature_matrix(x), internal_reps)), axis=1)
+        return np.concatenate(list(map(lambda x: iv_utilities.produce_feature_matrix(x), internal_reps)), axis=0)
 
     @staticmethod
     def convert_forces_to_internal(forces, internal_reps):
         forces_k_space = []
         for i in range(len(forces)):
-            forces_k_space.append(internal_reps[i].dot(forces[i].T))
-        return np.concatenate(forces_k_space, axis=1)
+            forces_k_space.append(internal_reps[i].dot(forces[i].T).reshape(1, (internal_reps[i].shape[0])**2))
+        return np.concatenate(forces_k_space, axis=0)
 
     @staticmethod
     def load_arrangements_in_internal(rel_path, start=0, end=None):
