@@ -3,6 +3,7 @@ from lib.gaussian_process import utilities
 import numpy as np
 from lib.internal_vector import utilities as iv_utilities
 from lib.gaussian_process.model import GaussianProcess as GP
+from numpy.linalg import pinv
 
 class MDForcesPredictor:
     @staticmethod
@@ -19,8 +20,13 @@ class MDForcesPredictor:
         print(feature_mats.shape)
         print(forces_k_space.shape)
 
-        predictions = gp.predict(feature_mats[:90], forces_k_space[:90], feature_mats[98:])
-        print(predictions)
+        predictions = gp.predict(feature_mats[:90], forces_k_space[:90], feature_mats[96:])
+        predicted_cart_forces = MDForcesPredictor.convert_internal_forces_to_cartesian(predictions, internal_reps)
+        for real_example, predicted in zip(forces[96:], predicted_cart_forces):
+            for real_forces, predicted_forces in zip(real_example, predicted): 
+                print('Example:')
+                print(real_forces)
+                print(predicted_forces)
 
     @staticmethod
     def produce_internal():
@@ -37,9 +43,23 @@ class MDForcesPredictor:
     @staticmethod
     def convert_forces_to_internal(forces, internal_reps):
         forces_k_space = []
+        num_forces_per_arrangement = forces[0].shape[0]
         for i in range(len(forces)):
-            forces_k_space.append(internal_reps[i].dot(forces[i].T).reshape(1, (internal_reps[i].shape[0])**2))
+            forces_for_arrangement = []
+            for j in range(num_forces_per_arrangement):
+                forces_for_arrangement.append(internal_reps[i].dot(forces[i][j].T))
+            forces_for_arrangement = [ force_component for forces in forces_for_arrangement for force_component in forces ]
+            forces_k_space.append(np.array(forces_for_arrangement).reshape(1, len(forces_for_arrangement)))
         return np.concatenate(forces_k_space, axis=0)
+
+    @staticmethod
+    def convert_internal_forces_to_cartesian(forces, internal_reps):
+        cart_forces = []
+        k = int(np.sqrt(forces.shape[1]))
+        for i in range(len(forces)):
+            internal_inv = pinv(internal_reps[i])
+            cart_forces.append([ internal_inv.dot(forces[i][j:j+k]) for j in range(0, forces.shape[1], k) ])
+        return cart_forces
 
     @staticmethod
     def load_arrangements_in_internal(rel_path, start=0, end=None):

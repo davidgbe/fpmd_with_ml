@@ -53,6 +53,7 @@ def cartesian_operation(X_1, X_2=None, function=None, cores=None, cached_pool=No
 
     chunk_size_1 = int(sqrt(rows_1 * rows_2 / cores))
     chunk_size_1 = chunk_size_1 if chunk_size_1 <= max_chunk_size else max_chunk_size
+    chunk_size_1 = 1 if chunk_size_1 == 0 else chunk_size_1
     chunk_size_2 = chunk_size_1
 
     iter_size_1 = chunk_size_1 * cols

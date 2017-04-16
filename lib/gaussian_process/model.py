@@ -21,18 +21,18 @@ class GaussianProcess:
         self.save_params = partial(save_params, rel_path=self.cache_path)
         self.load_params = partial(load_params, rel_path=self.cache_path)
 
-    def single_predict(self, target_x, training_cov_inv, Y_t, X, cached_pool=None):
+    def single_predict(self, target_x, training_cov_inv, Y, X, cached_pool=None):
         training_target_cov = cartesian_operation(X, target_x, function=self.covariance_func, cached_pool=cached_pool)
         #target_cov = self.compute_covariance(target_x)
-        mean = training_target_cov.T.dot(training_cov_inv).dot(Y_t)
+        means = training_target_cov.T.dot(training_cov_inv).dot(Y)
         #stdevs = target_cov - training_target_cov.T.dot(training_cov_inv).dot(training_target_cov)
-        return mean.reshape(1)
+        print(means.shape)
+        return means.reshape(means.size)
 
     def batch_predict(self, X, Y, target_X, batch_size=20):
         training_cov = cartesian_operation(X, function=self.covariance_func)
         training_cov_inv = pinv(training_cov)
         print('Finished matrix inversion')
-        Y_t = Y.reshape(Y.size, 1)
         predictions = []
 
         for i in range(0, target_X.shape[0], batch_size):
@@ -41,7 +41,7 @@ class GaussianProcess:
             end = i + batch_size if (i + batch_size) < target_X.shape[0] else target_X.shape[0]
             print(end)
             for j in range(i, end):
-                batch.append(self.single_predict(target_X[j], training_cov_inv, Y_t, X, pool))
+                batch.append(self.single_predict(target_X[j], training_cov_inv, Y, X, pool))
             pool.close()
             pool.join()
             predictions = predictions + batch
@@ -63,17 +63,20 @@ class GaussianProcess:
             target_X = target_X[:, ~zero_cols]
 
         # preprocess training X and Y
-        (X, mean_X) = zero_mean(X)
+        (X, mean_X, std_X) = normalize(X)
         (Y, mean_Y, std_Y) = normalize(Y)
 
         # preprocess target data
         target_X = target_X - mean_X
+        target_X = np.divide(target_X, std_X)
 
-        if 'length_scales' not in self.hyperparams:
-            self.generate_length_scales(X)
+        print(X.mean(0))
+        print(target_X.mean(0))
+
+        # if 'length_scales' not in self.hyperparams:
+        #     self.generate_length_scales(X)
 
         self.hyperparams['iv_dist_scales'] = compute_feature_mat_scale_factors(X)
-        print(self.hyperparams['iv_dist_scales'].shape)
 
         #self.hyperparams['length_scales'] = initial_length_scales(X[:20])
         return (self.batch_predict(X, Y, target_X) * std_Y + mean_Y)

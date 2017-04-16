@@ -43,9 +43,9 @@ def compute_iv_distance(x_1, x_2, stdevs):
     if x_1.shape != x_2.shape:
         raise ValueError('Features matrices must have the same dimensions!')
     k = int(np.sqrt(x_2.shape[0]))
-    for row in range(k):
-        scale_factor = stdevs[row]
-        for col in range(k):
+    for col in range(k):
+        scale_factor = stdevs[col]
+        for row in range(k):
             dist += ((x_1[k*row + col] - x_2[k*row + col]) / scale_factor)**2
     dist /= k
     return np.sqrt(dist)
