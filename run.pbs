@@ -1,5 +1,5 @@
 #!/bin/bash
-#PBS -l nodes=1:ppn=3,walltime=00:45:00
+#PBS -l nodes=1:ppn=16,walltime=00:45:00
 cd fpmd_with_ml
 chmod u+x user/bin/*
 source fpmd_run
