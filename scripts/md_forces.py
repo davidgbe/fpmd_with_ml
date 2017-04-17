@@ -12,7 +12,7 @@ class MDForcesPredictor:
         start = 1000
         end = 1200
         internal_reps = MDForcesPredictor.load_data(data_path + '/iv_reps_108.txt', start, end)
-        forces = MDForcesPredictor.load_data(data_path + '/forcefile_7000step_108part.txt', start, end)
+        forces = MDForcesPredictor.load_data(data_path + '/forcefile_7000step_108part.txt', 0, end - start)
         forces_k_space = MDForcesPredictor.convert_forces_to_internal(forces, internal_reps)
         feature_mats = MDForcesPredictor.produce_feature_mats(internal_reps)
 
@@ -35,8 +35,8 @@ class MDForcesPredictor:
 
     @staticmethod
     def produce_internal():
-        start = 0
-        end = 100
+        start = 1000
+        end = 3000
         internal_reps = MDForcesPredictor.load_arrangements_in_internal('../datasets/md/posfile_7000step_108part.txt', start, end)
 
         MDForcesPredictor.write_data('../datasets/md/iv_reps_108.txt', internal_reps)
