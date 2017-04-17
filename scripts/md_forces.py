@@ -10,7 +10,7 @@ class MDForcesPredictor:
     @staticmethod
     def predict(data_path):
         start = 1000
-        end = 1800
+        end = 1050
         internal_reps = MDForcesPredictor.load_data(data_path + '/iv_reps_108.txt', start, end)
         forces = MDForcesPredictor.load_data(data_path + '/forcefile_7000step_108part.txt', 0, end - start)
         forces_k_space = MDForcesPredictor.convert_forces_to_internal(forces, internal_reps)
@@ -21,17 +21,22 @@ class MDForcesPredictor:
         print(feature_mats.shape)
         print(forces_k_space.shape)
 
-        training_test_divide = 750
+        training_test_divide = 45
 
         predictions = gp.predict(feature_mats[:training_test_divide], forces_k_space[:training_test_divide], feature_mats[training_test_divide:])
         predicted_cart_forces = MDForcesPredictor.convert_internal_forces_to_cartesian(predictions, internal_reps)
-        print(len(forces[training_test_divide:]))
-        print(len(predicted_cart_forces))
+
+        errors = []
+
         for real_example, predicted in zip(forces[training_test_divide:], predicted_cart_forces):
             for real_forces, predicted_forces in zip(real_example, predicted): 
                 print('Example:')
                 print(real_forces)
                 print(predicted_forces)
+                diff = predicted_forces - real_forces
+                errors.append(diff.dot(diff) / real_forces.dot(real_forces))
+
+        print(np.average(errors))
 
     @staticmethod
     def produce_internal():

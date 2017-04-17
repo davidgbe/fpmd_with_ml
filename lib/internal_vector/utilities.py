@@ -48,4 +48,5 @@ def compute_iv_distance(x_1, x_2, stdevs):
         for row in range(k):
             dist += ((x_1[k*row + col] - x_2[k*row + col]) / scale_factor)**2
     dist /= k
+    print(dist)
     return dist
