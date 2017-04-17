@@ -5,9 +5,13 @@ from functools import partial
 from .utilities import create_pool
 import multiprocessing as mp
 from lib.internal_vector.utilities import compute_iv_distance
+from timeit import timeit
 
 def covariance_exp_arg(x_1, x_2, hyperparams):
-    return compute_iv_distance(x_1, x_2, hyperparams['iv_dist_scales'])
+    #start = timeit()
+    cov = compute_iv_distance(x_1, x_2, hyperparams['iv_dist_scales'])
+    #print(timeit() - start)
+    return cov
 
 def default_covariance_func(x_1, x_2, hyperparams):
     a = hyperparams['theta_amp']**2.0
@@ -27,6 +31,7 @@ def covariance_mat_derivative_theta_amp(x_1, x_2, hyperparams):
 def operation_on_chunk(chunks, function, func_input_size):
     (chunk_1, chunk_2) = chunks
     transformed_mat = np.zeros((int(chunk_1.size/func_input_size), int(chunk_2.size/func_input_size)))
+    total = chunk_1.size * chunk_2.size
     for i in range(0, chunk_1.size, func_input_size):
         for j in range(0, chunk_2.size, func_input_size):
             transformed_mat[int(i/func_input_size), int(j/func_input_size)] = function(chunk_1[i:i+func_input_size], chunk_2[j:j+func_input_size])

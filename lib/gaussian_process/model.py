@@ -26,11 +26,11 @@ class GaussianProcess:
         #target_cov = self.compute_covariance(target_x)
         means = training_target_cov.T.dot(training_cov_inv).dot(Y)
         #stdevs = target_cov - training_target_cov.T.dot(training_cov_inv).dot(training_target_cov)
-        print(means.shape)
         return means.reshape(means.size)
 
     def batch_predict(self, X, Y, target_X, batch_size=20):
         print('Creating training covariance')
+        print(X.shape)
         training_cov = cartesian_operation(X, function=self.covariance_func)
         print('Inverting covariance mat')
         training_cov_inv = pinv(training_cov)
@@ -72,15 +72,8 @@ class GaussianProcess:
         target_X = target_X - mean_X
         target_X = np.divide(target_X, std_X)
 
-        print(X.std(0))
-        print(target_X.std(0))
-
-        # if 'length_scales' not in self.hyperparams:
-        #     self.generate_length_scales(X)
-
         self.hyperparams['iv_dist_scales'] = compute_feature_mat_scale_factors(X)
 
-        #self.hyperparams['length_scales'] = initial_length_scales(X[:20])
         return (self.batch_predict(X, Y, target_X) * std_Y + mean_Y)
 
     def fit(self, X, Y):
