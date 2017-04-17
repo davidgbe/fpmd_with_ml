@@ -30,7 +30,9 @@ class GaussianProcess:
         return means.reshape(means.size)
 
     def batch_predict(self, X, Y, target_X, batch_size=20):
+        print('Creating training covariance')
         training_cov = cartesian_operation(X, function=self.covariance_func)
+        print('Inverting covariance mat')
         training_cov_inv = pinv(training_cov)
         print('Finished matrix inversion')
         predictions = []
@@ -70,8 +72,8 @@ class GaussianProcess:
         target_X = target_X - mean_X
         target_X = np.divide(target_X, std_X)
 
-        print(X.mean(0))
-        print(target_X.mean(0))
+        print(X.std(0))
+        print(target_X.std(0))
 
         # if 'length_scales' not in self.hyperparams:
         #     self.generate_length_scales(X)
