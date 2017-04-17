@@ -4,14 +4,15 @@ import numpy as np
 from lib.internal_vector import utilities as iv_utilities
 from lib.gaussian_process.model import GaussianProcess as GP
 from numpy.linalg import pinv
+import sys
 
 class MDForcesPredictor:
     @staticmethod
-    def predict():
+    def predict(data_path):
         start = 1000
         end = 1350
-        internal_reps = MDForcesPredictor.load_data('../datasets/md/iv_reps.txt', start, end)
-        forces = MDForcesPredictor.load_data('../datasets/md/forcefile_5000step_256part.txt', start, end)
+        internal_reps = MDForcesPredictor.load_data(data_path + '/iv_reps.txt', start, end)
+        forces = MDForcesPredictor.load_data(data_path + '/forcefile_5000step_256part.txt', start, end)
         forces_k_space = MDForcesPredictor.convert_forces_to_internal(forces, internal_reps)
         feature_mats = MDForcesPredictor.produce_feature_mats(internal_reps)
 
@@ -104,4 +105,4 @@ class MDForcesPredictor:
                 csv_writer.writerow(example[i])
         data_file.close()
 
-MDForcesPredictor.predict()
+MDForcesPredictor.predict(sys.argv[1])
