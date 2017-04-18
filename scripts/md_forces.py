@@ -18,9 +18,6 @@ class MDForcesPredictor:
 
         gp = GP()
 
-        print(feature_mats.shape)
-        print(forces_k_space.shape)
-
         training_test_divide = 45
 
         predictions = gp.predict(feature_mats[:training_test_divide], forces_k_space[:training_test_divide], feature_mats[training_test_divide:])

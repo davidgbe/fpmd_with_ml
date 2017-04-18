@@ -30,7 +30,6 @@ class GaussianProcess:
 
     def batch_predict(self, X, Y, target_X, batch_size=20):
         print('Creating training covariance')
-        print(X.shape)
         training_cov = cartesian_operation(X, function=self.covariance_func)
         print('Inverting covariance mat')
         training_cov_inv = pinv(training_cov)
@@ -54,25 +53,27 @@ class GaussianProcess:
         self.hyperparams['length_scales'] = initial_length_scales(X)
 
     def predict(self, X, Y, target_X):
-        # find features that don't vary in training data
-        zero_cols = np.array((X.std(0) == 0.0))
+        combined_X = np.concatenate([X, target_X], axis=0)
+
+        # find features that don't vary in data
+        zero_cols = np.array((combined_X.std(0) == 0.0))
         zero_cols = zero_cols.reshape(zero_cols.shape[0])
 
-        if zero_cols.shape[0] != 0:
+        if zero_cols[zero_cols != False].shape[0] != 0:
             # strip out features that only have one value
-            X = X[:, ~zero_cols]
-            # remove features that didn't vary in the training set from test set
-            target_X = target_X[:, ~zero_cols]
+            combined_X = combined_X[:, ~zero_cols]
+
+        #print(combined_X.shape)
 
         # preprocess training X and Y
-        (X, mean_X, std_X) = normalize(X)
+        (combined_X, mean_X, std_X) = normalize(combined_X)
         (Y, mean_Y, std_Y) = normalize(Y)
 
-        # preprocess target data
-        target_X = target_X - mean_X
-        target_X = np.divide(target_X, std_X)
+        self.hyperparams['iv_dist_scales'] = compute_feature_mat_scale_factors(combined_X)
 
-        self.hyperparams['iv_dist_scales'] = compute_feature_mat_scale_factors(X)
+        num_training = X.shape[0] - zero_cols[zero_cols != False].shape[0]
+        X = combined_X[:num_training, :]
+        target_X = combined_X[num_training:, :]
 
         return (self.batch_predict(X, Y, target_X) * std_Y + mean_Y)
 
