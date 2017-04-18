@@ -28,25 +28,24 @@ def transform_to_basis(real_vecs, basis_trans):
     return np.apply_along_axis(trans, 1, real_vecs)
 
 def compute_feature_mat_scale_factors(feature_mats):
-    stdevs = []
+    all_variances = []
     k = int(np.sqrt(feature_mats[0].shape[0]))
-    feature_variances = np.square(feature_mats.std(0))
+    feature_variances = feature_mats.var(0)
     for i in range(k):
         row_variance = 0
         for j in range(k):
             row_variance += feature_variances[i + k * j]
-        stdevs.append(np.sqrt(row_variance))
-    return np.array(stdevs)
+        all_variances.append(row_variance)
+    return all_variances
 
-def compute_iv_distance(x_1, x_2, stdevs):
+def compute_iv_distance(x_1, x_2, variances):
     dist = 0
     if x_1.shape != x_2.shape:
         raise ValueError('Features matrices must have the same dimensions!')
     k = int(np.sqrt(x_2.shape[0]))
     for col in range(k):
-        scale_factor = stdevs[col]
         for row in range(k):
-            dist += ((x_1[k*row + col] - x_2[k*row + col]) / scale_factor)**2
+            dist += ((x_1[k*row + col] - x_2[k*row + col])**2 / variances[col])
     dist /= k
     print(dist)
     return dist

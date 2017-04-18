@@ -8,10 +8,7 @@ from lib.internal_vector.utilities import compute_iv_distance
 from timeit import timeit
 
 def covariance_exp_arg(x_1, x_2, hyperparams):
-    #start = timeit()
-    cov = compute_iv_distance(x_1, x_2, hyperparams['iv_dist_scales'])
-    #print(timeit() - start)
-    return cov
+    return compute_iv_distance(x_1, x_2, hyperparams['iv_dist_scales'])
 
 def default_covariance_func(x_1, x_2, hyperparams):
     a = hyperparams['theta_amp']**2.0
