@@ -10,19 +10,25 @@ class MDForcesPredictor:
     @staticmethod
     def predict(data_path):
         start = 1000
-        end = 1800
-        internal_reps = MDForcesPredictor.load_data(data_path + '/iv_reps_108.txt', start, end)
+        end = 2050
+        internal_reps = MDForcesPredictor.load_data(data_path + '/iv_reps_108.txt', 0, end - start)
         internal_reps_normed = [ iv_utilities.normalize_mat(rep) for rep in internal_reps ]
-        forces = MDForcesPredictor.load_data(data_path + '/forcefile_7000step_108part.txt', 0, end - start)
+        forces = MDForcesPredictor.load_data(data_path + '/forcefile_7000step_108part.txt', start, end)
         forces_k_space = MDForcesPredictor.convert_forces_to_internal(forces, internal_reps_normed)
         feature_mats = MDForcesPredictor.produce_feature_mats(internal_reps)
 
         gp = GP()
 
-        training_test_divide = 750
+        perm = np.random.permutation(len(feature_mats))
+        np.take(feature_mats, perm, axis=0, out=feature_mats)
+        internal_reps_normed = utilities.reorder(internal_reps_normed, perm)
+        forces = utilities.reorder(forces, perm)
+        np.take(forces_k_space, perm, axis=0, out=forces_k_space)
+
+        training_test_divide = 1000
 
         predictions = gp.predict(feature_mats[:training_test_divide], forces_k_space[:training_test_divide], feature_mats[training_test_divide:])
-        predicted_cart_forces = MDForcesPredictor.convert_internal_forces_to_cartesian(predictions, internal_reps_normed    )
+        predicted_cart_forces = MDForcesPredictor.convert_internal_forces_to_cartesian(predictions, internal_reps_normed)
 
         errors = []
 
@@ -52,6 +58,8 @@ class MDForcesPredictor:
     def convert_forces_to_internal(forces, internal_reps_normed):
         forces_k_space = []
         num_forces_per_arrangement = forces[0].shape[0]
+        print(len(forces))
+        print(len(internal_reps_normed))
         for i in range(len(forces)):
             forces_for_arrangement = []
             for j in range(num_forces_per_arrangement):

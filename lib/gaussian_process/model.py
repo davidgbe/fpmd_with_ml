@@ -9,6 +9,7 @@ from .utilities import create_pool, save_params, load_params, zero_mean, normali
 from .grid_search import grid_search
 import os
 from lib.internal_vector.utilities import compute_feature_mat_scale_factors
+from copy import deepcopy
 
 class GaussianProcess:
     def __init__(self, covariance_func=None, use_saved_params=False):
@@ -23,8 +24,10 @@ class GaussianProcess:
 
     def single_predict(self, target_x, training_cov_inv, Y, X, cached_pool=None):
         training_target_cov = cartesian_operation(X, target_x, function=self.covariance_func, cached_pool=cached_pool)
+        print(target_x.shape)
         print('THE MEAN')
         print(training_target_cov.mean())
+        print(training_target_cov.shape)
         #target_cov = self.compute_covariance(target_x)
         means = training_target_cov.T.dot(training_cov_inv).dot(Y)
         #stdevs = target_cov - training_target_cov.T.dot(training_cov_inv).dot(training_target_cov)
@@ -46,7 +49,7 @@ class GaussianProcess:
             end = i + batch_size if (i + batch_size) < target_X.shape[0] else target_X.shape[0]
             print(end)
             for j in range(i, end):
-                batch.append(self.single_predict(target_X[j], training_cov_inv, Y, X, pool))
+                batch.append(self.single_predict(target_X[j, :], training_cov_inv, Y, X, pool))
             pool.close()
             pool.join()
             predictions = predictions + batch
@@ -63,6 +66,7 @@ class GaussianProcess:
 
         if zero_cols[zero_cols != False].shape[0] != 0:
             # strip out features that only have one value
+            X = X[:, ~zero_cols]
             target_X = target_X[:, ~zero_cols]
 
         # preprocess training X and Y
@@ -71,14 +75,9 @@ class GaussianProcess:
 
         self.hyperparams['iv_dist_scales'] = compute_feature_mat_scale_factors(X)
 
+        # preprocess target X with respect to X
         target_X -= mean_X
         target_X = np.divide(target_X, std_X)
-
-        print(X.mean())
-        print(target_X.mean())
-
-        print(X.std())
-        print(target_X.std())
 
         return (self.batch_predict(X, Y, target_X) * std_Y + mean_Y)
 

@@ -80,3 +80,6 @@ def save_params(name, obj, rel_path):
 def load_params(name, rel_path):
     whole_path = os.path.join(rel_path, '%s.p' % name)
     return pickle.load(open(whole_path, 'rb'))
+
+def reorder(l, order):
+    return [ l[i] for i in order ]
