@@ -10,7 +10,7 @@ class MDForcesPredictor:
     @staticmethod
     def predict(data_path):
         start = 1000
-        end = 1100
+        end = 1800
         internal_reps = MDForcesPredictor.load_data(data_path + '/iv_reps_108.txt', start, end)
         internal_reps_normed = [ iv_utilities.normalize_mat(rep) for rep in internal_reps ]
         forces = MDForcesPredictor.load_data(data_path + '/forcefile_7000step_108part.txt', 0, end - start)
@@ -19,7 +19,7 @@ class MDForcesPredictor:
 
         gp = GP()
 
-        training_test_divide = 75
+        training_test_divide = 750
 
         predictions = gp.predict(feature_mats[:training_test_divide], forces_k_space[:training_test_divide], feature_mats[training_test_divide:])
         predicted_cart_forces = MDForcesPredictor.convert_internal_forces_to_cartesian(predictions, internal_reps_normed    )
