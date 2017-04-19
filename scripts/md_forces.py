@@ -10,18 +10,19 @@ class MDForcesPredictor:
     @staticmethod
     def predict(data_path):
         start = 1000
-        end = 1800
+        end = 1100
         internal_reps = MDForcesPredictor.load_data(data_path + '/iv_reps_108.txt', start, end)
+        internal_reps_normed = [ iv_utilities.normalize_mat(rep) for rep in internal_reps ]
         forces = MDForcesPredictor.load_data(data_path + '/forcefile_7000step_108part.txt', 0, end - start)
-        forces_k_space = MDForcesPredictor.convert_forces_to_internal(forces, internal_reps)
+        forces_k_space = MDForcesPredictor.convert_forces_to_internal(forces, internal_reps_normed)
         feature_mats = MDForcesPredictor.produce_feature_mats(internal_reps)
 
         gp = GP()
 
-        training_test_divide = 750
+        training_test_divide = 75
 
         predictions = gp.predict(feature_mats[:training_test_divide], forces_k_space[:training_test_divide], feature_mats[training_test_divide:])
-        predicted_cart_forces = MDForcesPredictor.convert_internal_forces_to_cartesian(predictions, internal_reps)
+        predicted_cart_forces = MDForcesPredictor.convert_internal_forces_to_cartesian(predictions, internal_reps_normed    )
 
         errors = []
 
@@ -31,7 +32,7 @@ class MDForcesPredictor:
                 print(real_forces)
                 print(predicted_forces)
                 diff = predicted_forces - real_forces
-                errors.append(diff.dot(diff) / real_forces.dot(real_forces))
+                errors.append(diff.dot(diff) / real_forces.dot(real_forces) * 100)
 
         print(np.average(errors))
 
@@ -48,23 +49,23 @@ class MDForcesPredictor:
         return np.concatenate(list(map(lambda x: iv_utilities.produce_feature_matrix(x), internal_reps)), axis=0)
 
     @staticmethod
-    def convert_forces_to_internal(forces, internal_reps):
+    def convert_forces_to_internal(forces, internal_reps_normed):
         forces_k_space = []
         num_forces_per_arrangement = forces[0].shape[0]
         for i in range(len(forces)):
             forces_for_arrangement = []
             for j in range(num_forces_per_arrangement):
-                forces_for_arrangement.append(internal_reps[i].dot(forces[i][j].T))
+                forces_for_arrangement.append(internal_reps_normed[i].dot(forces[i][j].T))
             forces_for_arrangement = [ force_component for forces in forces_for_arrangement for force_component in forces ]
             forces_k_space.append(np.array(forces_for_arrangement).reshape(1, len(forces_for_arrangement)))
         return np.concatenate(forces_k_space, axis=0)
 
     @staticmethod
-    def convert_internal_forces_to_cartesian(forces, internal_reps):
+    def convert_internal_forces_to_cartesian(forces, internal_reps_normed):
         cart_forces = []
         k = int(np.sqrt(forces.shape[1]))
         for i in range(len(forces)):
-            internal_inv = pinv(internal_reps[i])
+            internal_inv = pinv(internal_reps_normed[i])
             cart_forces.append([ internal_inv.dot(forces[i][j:j+k]) for j in range(0, forces.shape[1], k) ])
         return cart_forces
 

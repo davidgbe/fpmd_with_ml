@@ -23,6 +23,8 @@ class GaussianProcess:
 
     def single_predict(self, target_x, training_cov_inv, Y, X, cached_pool=None):
         training_target_cov = cartesian_operation(X, target_x, function=self.covariance_func, cached_pool=cached_pool)
+        print('THE MEAN')
+        print(training_target_cov.mean())
         #target_cov = self.compute_covariance(target_x)
         means = training_target_cov.T.dot(training_cov_inv).dot(Y)
         #stdevs = target_cov - training_target_cov.T.dot(training_cov_inv).dot(training_target_cov)
@@ -31,6 +33,8 @@ class GaussianProcess:
     def batch_predict(self, X, Y, target_X, batch_size=20):
         print('Creating training covariance')
         training_cov = cartesian_operation(X, function=self.covariance_func)
+        print('COV MEAN')
+        print(training_cov.mean())
         print('Inverting covariance mat')
         training_cov_inv = pinv(training_cov)
         print('Finished matrix inversion')
@@ -53,27 +57,28 @@ class GaussianProcess:
         self.hyperparams['length_scales'] = initial_length_scales(X)
 
     def predict(self, X, Y, target_X):
-        combined_X = np.concatenate([X, target_X], axis=0)
-
         # find features that don't vary in data
-        zero_cols = np.array((combined_X.std(0) == 0.0))
+        zero_cols = np.array((X.std(0) == 0.0))
         zero_cols = zero_cols.reshape(zero_cols.shape[0])
 
         if zero_cols[zero_cols != False].shape[0] != 0:
             # strip out features that only have one value
-            combined_X = combined_X[:, ~zero_cols]
-
-        #print(combined_X.shape)
+            target_X = target_X[:, ~zero_cols]
 
         # preprocess training X and Y
-        (combined_X, mean_X, std_X) = normalize(combined_X)
+        (X, mean_X, std_X) = normalize(X)
         (Y, mean_Y, std_Y) = normalize(Y)
 
-        self.hyperparams['iv_dist_scales'] = compute_feature_mat_scale_factors(combined_X)
+        self.hyperparams['iv_dist_scales'] = compute_feature_mat_scale_factors(X)
 
-        num_training = X.shape[0] - zero_cols[zero_cols != False].shape[0]
-        X = combined_X[:num_training, :]
-        target_X = combined_X[num_training:, :]
+        target_X -= mean_X
+        target_X = np.divide(target_X, std_X)
+
+        print(X.mean())
+        print(target_X.mean())
+
+        print(X.std())
+        print(target_X.std())
 
         return (self.batch_predict(X, Y, target_X) * std_Y + mean_Y)
 

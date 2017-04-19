@@ -17,10 +17,13 @@ def produce_internal_basis(atomic_config_mat, r_cut=1.0, p=1.0):
         new_basis.append(internal_basis_vec)
     return np.concatenate(new_basis)
 
-def produce_feature_matrix(basis_mat):
-    mags = np.apply_along_axis(norm, 1, basis_mat)
+def normalize_mat(mat):
+    mags = np.apply_along_axis(norm, 1, mat)
     mags = mags.reshape(mags.shape[0], 1)
-    v_norm_trans = np.divide(basis_mat, mags).T
+    return np.divide(mat, mags)
+
+def produce_feature_matrix(basis_mat):
+    v_norm_trans = normalize_mat(basis_mat).T
     return basis_mat.dot(v_norm_trans).reshape(1, (basis_mat.shape[0])**2)
 
 def transform_to_basis(real_vecs, basis_trans):
@@ -44,8 +47,10 @@ def compute_iv_distance(x_1, x_2, variances):
         raise ValueError('Features matrices must have the same dimensions!')
     k = int(np.sqrt(x_2.shape[0]))
     for col in range(k):
+        partial_dist = 0
         for row in range(k):
-            dist += ((x_1[k*row + col] - x_2[k*row + col])**2 / variances[col])
+            partial_dist += (x_1[k*row + col] - x_2[k*row + col])**2
+        partial_dist /= variances[col]
+        dist += partial_dist
     dist /= k
-    print(dist)
     return dist
