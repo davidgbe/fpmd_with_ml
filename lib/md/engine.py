@@ -1,3 +1,4 @@
+import sys
 import numpy as np
 from numpy.linalg import norm as mag
 from numpy.random import random
@@ -86,15 +87,18 @@ def boundary_cond_dist(position1, position2, L_star):
 # The engine!
 class MDEngine:
     # Initialization
-    def __init__(self, out_file_name = None):
+    def __init__(self, num_particles = 256, out_file_name = None):
 
-        self.num_particles = 256                                            # Number of particles (should go back to 500, 256 right now as
-                                                                               # numbers seem to come out the same and it's way faster)
+        self.num_particles = num_particles                                  # Number of particles
         self.T_star = 1.                                                    # Dimensionless Temperature
         self.rho_star = 0.8                                                 # Dimensionless particle number density
         self.L_star = (self.num_particles/self.rho_star)**(1./3)            # Dimensionless length of lattice
         self.r_c_star = 2.5                                                 # Dimensionless cut off length
-        self.del_t = 0.01                                                   # Dimensionless time
+        self.del_t = 0.005                                                  # Dimensionless time
+
+        # Open files for position and force printing
+        self.posfile = open("../engine_outputs/pos_quickTEST.txt", 'w')
+        self.forcefile = open("../engine_outputs/for_quickTEST.txt", 'w')
 
         # Open file for energies to be written to
         self.has_ofile = 0
@@ -107,7 +111,7 @@ class MDEngine:
         self.generate_tau_velos()
 
         # Calculate and print initial values
-        self.calculate_total_energies()
+        self.calculate_1st_total_energies()
         if(self.has_ofile):
             self.ofile.write(str(self.total_kin_energy/self.num_particles))
             self.ofile.write(",")
@@ -120,7 +124,7 @@ class MDEngine:
 
 
         # Do first step, which is done differently due to not having position history
-        self.calculate_tau_accels()
+        self.calculate_tau_accels_pot_energy()
         self.calculate_1st_new_pos_velos()
         # Fix the tau_velos for current temperature
         self.fix_tau_velos()
@@ -199,28 +203,39 @@ class MDEngine:
         # Fix the tau_velos for current temperature
         self.fix_tau_velos()
 
-
-    # Calculate the "tau_accel" on each particle, that is tau^2 times the acceleration vector
-    def calculate_tau_accels(self):
+    # Calculate the "tau_accel" on each particle, that is tau^2 times the acceleration vector, and total potential energy
+    def calculate_tau_accels_pot_energy(self):
         # Matrix of components of tau^2 times acceleration
         tau_accel_mat = np.zeros((self.num_particles, 3))
+        total_pot_energy = 0
 
         # For each particle, find the total "tau_accel" of all other particles on it
         for i in range(self.num_particles):
-            for j in range(self.num_particles):
+            for j in range(i, self.num_particles):
                 if(i != j):
                     r_ij = particles_distance(self.positions_mat,i,j,self.L_star)
+                    r_ji = particles_distance(self.positions_mat,j,i,self.L_star)
                     if(r_ij > self.r_c_star):
                         pass
                     else:
+                        total_pot_energy += 0.5 * ((1./r_ij)**12. - (1./r_ij)**6.)
+                        total_pot_energy += 0.5 * ((1./r_ji)**12. - (1./r_ji)**6.)
+
                         tau_accel_ij_magnitude = 12. * (1./r_ij**6.) * ((1./r_ij**6.) - 0.5)
+                        tau_accel_ji_magnitude = 12. * (1./r_ji**6.) * ((1./r_ji**6.) - 0.5)
                         # Find signed component "tau_accels"
                         x_tau_accel_ij = tau_accel_ij_magnitude*particle_component_ratio(self.positions_mat,0,i,j,self.L_star)
                         y_tau_accel_ij = tau_accel_ij_magnitude*particle_component_ratio(self.positions_mat,1,i,j,self.L_star)
                         z_tau_accel_ij = tau_accel_ij_magnitude*particle_component_ratio(self.positions_mat,2,i,j,self.L_star)
                         add_matrix_x_y_z(tau_accel_mat, i, x_tau_accel_ij, y_tau_accel_ij, z_tau_accel_ij)
 
+                        x_tau_accel_ji = tau_accel_ji_magnitude*particle_component_ratio(self.positions_mat,0,j,i,self.L_star)
+                        y_tau_accel_ji = tau_accel_ji_magnitude*particle_component_ratio(self.positions_mat,1,j,i,self.L_star)
+                        z_tau_accel_ji = tau_accel_ji_magnitude*particle_component_ratio(self.positions_mat,2,j,i,self.L_star)
+                        add_matrix_x_y_z(tau_accel_mat, j, x_tau_accel_ji, y_tau_accel_ji, z_tau_accel_ji)
+
         self.tau_accel_mat = tau_accel_mat
+        self.total_pot_energy = total_pot_energy
 
     # Calculate position and velocity changes
     def calculate_new_pos_velos(self):
@@ -272,6 +287,11 @@ class MDEngine:
 
     # Calculate total energies (total energy should be pretty much the same every step)
     def calculate_total_energies(self):
+        self.total_kin_energy = find_kin_energy(self.tau_velo_mat)
+        self.energy_per_particle = self.total_kin_energy/self.num_particles + self.total_pot_energy/self.num_particles
+
+    # Calculate total energies (total energy should be pretty much the same every step)
+    def calculate_1st_total_energies(self):
         total_pot_energy = 0
         for i in range(self.num_particles):
             for j in range(self.num_particles):
@@ -288,12 +308,30 @@ class MDEngine:
     # To drive engine for some number of time steps
     def drive_engine(self, steps):
         for i in range(steps):
-            self.calculate_tau_accels()
+            print("step: "+str(i))
+            self.calculate_tau_accels_pot_energy()
             self.calculate_new_pos_velos()
             if(i<500):
                 # Fix the tau_velos for current temperature
                 self.fix_tau_velos()
             self.calculate_total_energies()
+
+            self.posfile.write("NEW\n")
+            self.forcefile.write("NEW\n")
+            for i in range(self.num_particles):
+                self.posfile.write(str(self.positions_mat[i,0]))
+                self.posfile.write(",")
+                self.posfile.write(str(self.positions_mat[i,1]))
+                self.posfile.write(",")
+                self.posfile.write(str(self.positions_mat[i,2]))
+                self.posfile.write("\n")
+                self.forcefile.write(str(self.tau_accel_mat[i,0]))
+                self.forcefile.write(",")
+                self.forcefile.write(str(self.tau_accel_mat[i,1]))
+                self.forcefile.write(",")
+                self.forcefile.write(str(self.tau_accel_mat[i,2]))
+                self.forcefile.write("\n")
+
             if(self.has_ofile):
                 self.ofile.write(str(self.total_kin_energy/self.num_particles))
                 self.ofile.write(",")
@@ -305,5 +343,10 @@ class MDEngine:
                 self.ofile.write("\n")
 
 # Actual running of program
-my_engine = MDEngine("../test.csv")
-my_engine.drive_engine(5000)
+if(len(sys.argv) != 4):
+    print("Usage: \n\t")
+    print(sys.argv[0] + "[number of particles] [number of steps] [energies outfile name]")
+    exit()
+else:
+    my_engine = MDEngine(int(sys.argv[1]), sys.argv[3])
+    my_engine.drive_engine(int(sys.argv[2]))
