@@ -3,7 +3,7 @@ from lib.gaussian_process import utilities
 import numpy as np
 from lib.internal_vector import utilities as iv_utilities
 from lib.gaussian_process.model import GaussianProcess as GP
-from numpy.linalg import pinv
+from numpy.linalg import inv
 import sys
 
 class MDForcesPredictor:
@@ -74,7 +74,7 @@ class MDForcesPredictor:
         cart_forces = []
         k = int(np.sqrt(forces.shape[1]))
         for i in range(len(forces)):
-            internal_inv = pinv(internal_reps_normed[i])
+            internal_inv = inv(internal_reps_normed[i])
             cart_forces.append([ internal_inv.dot(forces[i][j:j+k]) for j in range(0, forces.shape[1], k) ])
         return cart_forces
 
