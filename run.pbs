@@ -1,6 +1,9 @@
 #!/bin/bash
+#PBS -l nodes=1:ppn=16,walltime=03:00:00
 cd fpmd_with_ml
-source ./scripts/run
-source ./scripts/install
+chmod u+x user/bin/*
+source fpmd_run
+# mkdir -p /staging/dgb/davidgbe/pip_dependencies
+# fpmd_hpc_install
 
-python ./bin/mnist.py predict
+python3 ./scripts/md_forces.py /staging/dgb/davidgbe/md_data

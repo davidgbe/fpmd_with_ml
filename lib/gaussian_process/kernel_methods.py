@@ -2,14 +2,13 @@ import numpy as np
 from numpy.linalg import norm as mag
 from math import exp, ceil, sqrt
 from functools import partial
-from multiprocessing import set_start_method, Pool, cpu_count
-
-def squared_distance(v_1, v_2):
-    return np.square(v_1 - v_2)
+from .utilities import create_pool
+import multiprocessing as mp
+from lib.internal_vector.utilities import compute_iv_distance
+from timeit import timeit
 
 def covariance_exp_arg(x_1, x_2, hyperparams):
-    example_diff = x_1 - x_2
-    return np.square(example_diff).dot(np.square(hyperparams['length_scales']))
+    return compute_iv_distance(x_1, x_2, hyperparams['iv_dist_scales'])
 
 def default_covariance_func(x_1, x_2, hyperparams):
     a = hyperparams['theta_amp']**2.0
@@ -19,24 +18,26 @@ def default_covariance_func(x_1, x_2, hyperparams):
 # for varying the hyperparameters
 def covariance_mat_derivative_theta_length(x_1, x_2, hyperparams):
     l = hyperparams['theta_length']
-    return default_covariance_func(x_1, x_2, hyperparams) * np.sqrt(covariance_exp_arg(x_1, x_2, hyperparams)) / l**3.0
+    return default_covariance_func(x_1, x_2, hyperparams) * covariance_exp_arg(x_1, x_2, hyperparams) / l**3.0
 
 def covariance_mat_derivative_theta_amp(x_1, x_2, hyperparams):
     l = hyperparams['theta_length']
     return 2.0 * hyperparams['theta_amp'] * exp(-0.5 * covariance_exp_arg(x_1, x_2, hyperparams) / l**2.0)
 
 # applies function pairwise for two arrays
-def operation_on_chunk(chunk_1, chunk_2, function, func_input_size):
-    transformed_mat = np.zeros((chunk_1.size/func_input_size, chunk_2.size/func_input_size))
+def operation_on_chunk(chunks, function, func_input_size):
+    (chunk_1, chunk_2) = chunks
+    transformed_mat = np.zeros((int(chunk_1.size/func_input_size), int(chunk_2.size/func_input_size)))
+    total = chunk_1.size * chunk_2.size
     for i in range(0, chunk_1.size, func_input_size):
         for j in range(0, chunk_2.size, func_input_size):
-            transformed_mat[i/func_input_size, j/func_input_size] = function(chunk_1[i:i+func_input_size], chunk_2[j:j+func_input_size])
+            transformed_mat[int(i/func_input_size), int(j/func_input_size)] = function(chunk_1[i:i+func_input_size], chunk_2[j:j+func_input_size])
     return transformed_mat
 
 # runs an operation iteratively for every pair selected from X_1 and X_2
 # distributes work across cores provided
-def cartesian_operation(X_1, X_2=None, function=None, cores=None):
-    cores = cpu_count() if cores is None else cores
+def cartesian_operation(X_1, X_2=None, function=None, cores=None, cached_pool=None, max_chunk_size=300, max_concurrent=None):
+    cores = mp.cpu_count() - 1 if cores is None else cores
     # must change this to be a parametrized func
     function = default_covariance_func if (function is None) else function
     if X_2 is None:
@@ -53,31 +54,39 @@ def cartesian_operation(X_1, X_2=None, function=None, cores=None):
     flattened_2 = np.array(X_2).reshape(rows_2*cols)
 
     chunk_size_1 = int(sqrt(rows_1 * rows_2 / cores))
+    chunk_size_1 = chunk_size_1 if chunk_size_1 <= max_chunk_size else max_chunk_size
+    chunk_size_1 = 1 if chunk_size_1 == 0 else chunk_size_1
     chunk_size_2 = chunk_size_1
 
     iter_size_1 = chunk_size_1 * cols
     iter_size_2 = chunk_size_2 * cols
 
-    async_results = []
-
-    set_start_method('forkserver')
-    pool = Pool(cores)
-
+    all_chunks = []
     for i in range(0, rows_1, chunk_size_1):
         for j in range(0, rows_2, chunk_size_2):
             chunk_i = flattened_1[ (cols * i) : ((cols * i) + iter_size_1) ]
             chunk_j = flattened_2[ (cols * j) : ((cols * j) + iter_size_2) ]
-            async_results.append(pool.apply_async(operation_on_chunk, (chunk_i, chunk_j, function, cols)))
+            all_chunks.append((chunk_i, chunk_j))
 
-    pool.close()
-    pool.join()
-    async_results = [ res.get() for res in async_results]
+    operation = partial(operation_on_chunk, function=function, func_input_size=cols)
+
+    async_results = []
+    if cached_pool is not None:
+        async_results = cached_pool.map_async(operation, all_chunks).get()
+    else:
+        max_concurrent = cores if max_concurrent is None else max_concurrent
+        for i in range(0, len(all_chunks), max_concurrent):
+            pool = create_pool(max_concurrent)
+            async_results.append(pool.map_async(operation, all_chunks[i:i+max_concurrent]).get())
+            pool.close()
+            pool.join()
+        async_results = [result for result_block in async_results for result in result_block]
 
     chunks_num_1 = int(ceil(float(rows_1) / chunk_size_1))
     chunks_num_2 = int(ceil(float(rows_2) / chunk_size_2))
 
-    results = [ np.concatenate(async_results[j:j+chunks_num_2], axis=1) for j in range(0, chunks_num_1*chunks_num_2, chunks_num_2) ]
-    return np.concatenate(results)
+    async_results = [ np.concatenate(async_results[j:j+chunks_num_2], axis=1) for j in range(0, chunks_num_1*chunks_num_2, chunks_num_2) ]
+    return np.concatenate(async_results)
 
 def get_gradient_funcs(hyperparams):
     return {
