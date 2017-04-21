@@ -173,9 +173,9 @@ class MDEngine:
             #self.boxes_list = [deque() for m in range(self.total_boxes)]
             self.boxes_list = [[[deque() for i in range(self.boxes_per_dim)] for j in range(self.boxes_per_dim)] for k in range(self.boxes_per_dim)]
         if(self.grid):
-            print "true grid!"
+            print("true grid!")
         else:
-            print "no grid!"
+            print("no grid!")
 
     # To deal with periodic conditions for box indices
     def box_index_fix(self, gridindex):
@@ -317,9 +317,7 @@ class MDEngine:
         if(r_st > self.r_c_star):
             pass
         elif(r_st == 0):
-            print str(s) + "    "+ str(t)
-            print "\n\nERROR ERROR ERROR\n\n"
-            print str(s) + "    "+ str(t)
+            pass
         else:
             self.total_pot_energy += 0.5 * ((1./r_st)**12. - (1./r_st)**6.)
             self.total_pot_energy += 0.5 * ((1./r_ts)**12. - (1./r_ts)**6.)
@@ -401,7 +399,7 @@ class MDEngine:
     # To drive engine for some number of time steps
     def drive_engine(self, steps):
         for i in range(steps):
-            print "step: " +str(i)
+            print("step: " +str(i))
             self.calculate_new_pos()
             self.calculate_tau_accels_pot_energy()
             self.calculate_new_velos()
@@ -438,8 +436,8 @@ class MDEngine:
 
 # Actual running of program
 if(len(sys.argv) != 4):
-    print "\nUsage:"
-    print "\t" + sys.argv[0] + " [number of particles] [number of steps] [energies outfile name]"
+    print("\nUsage:")
+    print("\t" + sys.argv[0] + " [number of particles] [number of steps] [energies outfile name]")
     exit()
 else:
     my_engine = MDEngine(int(sys.argv[1]), sys.argv[3])

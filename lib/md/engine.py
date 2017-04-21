@@ -308,7 +308,7 @@ class MDEngine:
     # To drive engine for some number of time steps
     def drive_engine(self, steps):
         for i in range(steps):
-            print "step: "+str(i)
+            print("step: "+str(i))
             self.calculate_tau_accels_pot_energy()
             self.calculate_new_pos_velos()
             if(i<500):
@@ -344,8 +344,8 @@ class MDEngine:
 
 # Actual running of program
 if(len(sys.argv) != 4):
-    print "Usage: \n\t"
-    print sys.argv[0] + "[number of particles] [number of steps] [energies outfile name]"
+    print("Usage: \n\t")
+    print(sys.argv[0] + "[number of particles] [number of steps] [energies outfile name]")
     exit()
 else:
     my_engine = MDEngine(int(sys.argv[1]), sys.argv[3])
