@@ -14,7 +14,7 @@ class MDForcesPredictor:
         # write first number of first arrangement used to make internal rep data in file
         internal_reps = MDForcesPredictor.load_data(data_path + '/iv_reps_108_1_to_6_half.txt', start - 1000, end - 1000)
         internal_reps_normed = [ iv_utilities.normalize_mat(rep) for rep in internal_reps ]
-        forces = MDForcesPredictor.load_data(data_path + '/forcefile_7000step_108part.txt', start, end)
+        forces = MDForcesPredictor.load_data(data_path + '/for_108_7000TEST.txt', start, end)
         forces_k_space = MDForcesPredictor.convert_forces_to_internal(forces, internal_reps_normed)
         feature_mats = MDForcesPredictor.produce_feature_mats(internal_reps)
 
