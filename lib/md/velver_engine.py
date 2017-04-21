@@ -109,8 +109,8 @@ class MDEngine:
         self.del_t = 0.005                                                  # Dimensionless time
 
         # Open files for position and force printing
-        self.posfile = open("../velver_engine_outputs/pos_108_7000TEST.txt", 'w')
-        self.forcefile = open("../velver_engine_outputs/for_108_7000TEST.txt", 'w')
+        self.posfile = open("../velver_engine_outputs/pos_asd.txt", 'w')
+        self.forcefile = open("../velver_engine_outputs/for_asd.txt", 'w')
 
         # Open file for energies to be written to
         self.has_ofile = 0
