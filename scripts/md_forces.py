@@ -9,10 +9,10 @@ import sys
 class MDForcesPredictor:
     @staticmethod
     def predict(data_path):
-        start = 4000
-        end = 4500
+        start = 5000
+        end = 5500  
         # write first number of first arrangement used to make internal rep data in file
-        internal_reps = MDForcesPredictor.load_data(data_path + '/iv_reps_108.txt', start - 2000, end - 2000)
+        internal_reps = MDForcesPredictor.load_data(data_path + '/iv_reps_108_1_to_6_half.txt', start - 1000, end - 1000)
         internal_reps_normed = [ iv_utilities.normalize_mat(rep) for rep in internal_reps ]
         forces = MDForcesPredictor.load_data(data_path + '/forcefile_7000step_108part.txt', start, end)
         forces_k_space = MDForcesPredictor.convert_forces_to_internal(forces, internal_reps_normed)
@@ -45,7 +45,7 @@ class MDForcesPredictor:
 
     @staticmethod
     def produce_internal():
-        start = 2000
+        start = 1000
         end = 6500
         internal_reps = MDForcesPredictor.load_arrangements_in_internal('../datasets/md/posfile_7000step_108part.txt', start, end)
 
