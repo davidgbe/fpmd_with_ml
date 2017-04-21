@@ -1,5 +1,5 @@
 import numpy as np
-from numpy.linalg import pinv, norm as mag
+from numpy.linalg import inv, norm as mag
 from math import exp
 import time
 from .gradient_descent import optimize_hyperparams, initial_length_scales
@@ -36,10 +36,8 @@ class GaussianProcess:
     def batch_predict(self, X, Y, target_X, batch_size=20):
         print('Creating training covariance')
         training_cov = cartesian_operation(X, function=self.covariance_func)
-        print('COV MEAN')
-        print(training_cov.mean())
         print('Inverting covariance mat')
-        training_cov_inv = pinv(training_cov)
+        training_cov_inv = inv(training_cov)
         print('Finished matrix inversion')
         predictions = []
 
