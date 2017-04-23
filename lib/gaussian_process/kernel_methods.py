@@ -15,11 +15,13 @@ def default_covariance_func(x_1, x_2, hyperparams):
     l = hyperparams['theta_length']
     return a * exp(-0.5 * covariance_exp_arg(x_1, x_2, hyperparams) / l**2.0)
 
+# UNUSED
 # for varying the hyperparameters
 def covariance_mat_derivative_theta_length(x_1, x_2, hyperparams):
     l = hyperparams['theta_length']
     return default_covariance_func(x_1, x_2, hyperparams) * covariance_exp_arg(x_1, x_2, hyperparams) / l**3.0
 
+# UNUSED
 def covariance_mat_derivative_theta_amp(x_1, x_2, hyperparams):
     l = hyperparams['theta_length']
     return 2.0 * hyperparams['theta_amp'] * exp(-0.5 * covariance_exp_arg(x_1, x_2, hyperparams) / l**2.0)
@@ -56,6 +58,7 @@ def cartesian_operation(X_1, X_2=None, function=None, cores=None, cached_pool=No
     chunk_size_1 = int(sqrt(rows_1 * rows_2 / cores))
     chunk_size_1 = chunk_size_1 if chunk_size_1 <= max_chunk_size else max_chunk_size
     chunk_size_1 = 1 if chunk_size_1 == 0 else chunk_size_1
+    # these chunk sizes are always the same
     chunk_size_2 = chunk_size_1
 
     iter_size_1 = chunk_size_1 * cols
@@ -88,6 +91,7 @@ def cartesian_operation(X_1, X_2=None, function=None, cores=None, cached_pool=No
     async_results = [ np.concatenate(async_results[j:j+chunks_num_2], axis=1) for j in range(0, chunks_num_1*chunks_num_2, chunks_num_2) ]
     return np.concatenate(async_results)
 
+# UNUSED
 def get_gradient_funcs(hyperparams):
     return {
         'theta_amp': partial(covariance_mat_derivative_theta_amp, hyperparams=hyperparams),

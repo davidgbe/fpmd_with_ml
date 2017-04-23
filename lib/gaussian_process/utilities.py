@@ -83,3 +83,21 @@ def load_params(name, rel_path):
 
 def reorder(l, order):
     return [ l[i] for i in order ]
+
+def extract_indices_in_order(iterable, order):
+    if type(iterable) == np.ndarray:
+        return np.take(iterable, order, axis=0)
+    else:
+        return reorder(iterable, order)
+
+def sample_population(args, size=None, fraction=None):
+    available_indices = len(args[0])
+    # if no params are provided, just use entire dataset and reorder it
+    if size is None and fraction is None:
+        size = available_indices
+    num_choices = size if size is not None else int(fraction * iter_length)
+    indices = np.random.choice(available_indices, num_choices, replace=False)
+    print('index size')
+    print(indices.size)
+    return list(map(lambda l: extract_indices_in_order(l, indices), args))
+

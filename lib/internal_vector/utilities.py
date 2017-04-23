@@ -1,6 +1,6 @@
 import numpy as np
 from math import exp
-from numpy.linalg import norm, pinv
+from numpy.linalg import norm
 
 def produce_internal_basis(atomic_config_mat, r_cut=1.0, p=1.0):
     num_neighbors = atomic_config_mat.shape[0]

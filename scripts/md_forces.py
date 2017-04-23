@@ -3,14 +3,16 @@ from lib.gaussian_process import utilities
 import numpy as np
 from lib.internal_vector import utilities as iv_utilities
 from lib.gaussian_process.model import GaussianProcess as GP
-from numpy.linalg import inv
+from numpy.linalg import pinv
 import sys
+import gc
 
 class MDForcesPredictor:
     @staticmethod
     def predict(data_path):
-        start = 5000
-        end = 5500  
+        start = 2000
+        end = 6000
+
         # write first number of first arrangement used to make internal rep data in file
         internal_reps = MDForcesPredictor.load_data(data_path + '/iv_reps_108_1_to_6_half.txt', start - 1000, end - 1000)
         internal_reps_normed = [ iv_utilities.normalize_mat(rep) for rep in internal_reps ]
@@ -18,15 +20,18 @@ class MDForcesPredictor:
         forces_k_space = MDForcesPredictor.convert_forces_to_internal(forces, internal_reps_normed)
         feature_mats = MDForcesPredictor.produce_feature_mats(internal_reps)
 
+        to_sample = [feature_mats, internal_reps_normed, forces, forces_k_space]      
+        # sample only necessary examples 
+        num_examples = 800
+        (feature_mats, internal_reps_normed, forces, forces_k_space) = utilities.sample_population(to_sample, size=(num_examples + 50))
+
+        # free up examples not being used
+        del to_sample
+        gc.collect()
+
+        training_test_divide = num_examples
+
         gp = GP()
-
-        perm = np.random.permutation(len(feature_mats))
-        np.take(feature_mats, perm, axis=0, out=feature_mats)
-        internal_reps_normed = utilities.reorder(internal_reps_normed, perm)
-        forces = utilities.reorder(forces, perm)
-        np.take(forces_k_space, perm, axis=0, out=forces_k_space)
-
-        training_test_divide = 450
 
         predictions = gp.predict(feature_mats[:training_test_divide], forces_k_space[:training_test_divide], feature_mats[training_test_divide:])
         predicted_cart_forces = MDForcesPredictor.convert_internal_forces_to_cartesian(predictions, internal_reps_normed)
@@ -48,7 +53,6 @@ class MDForcesPredictor:
         start = 1000
         end = 6500
         internal_reps = MDForcesPredictor.load_arrangements_in_internal('../datasets/md/posfile_7000step_108part.txt', start, end)
-
         MDForcesPredictor.write_data('../datasets/md/iv_reps_108_all.txt', internal_reps)
 
     @staticmethod
@@ -59,8 +63,6 @@ class MDForcesPredictor:
     def convert_forces_to_internal(forces, internal_reps_normed):
         forces_k_space = []
         num_forces_per_arrangement = forces[0].shape[0]
-        print(len(forces))
-        print(len(internal_reps_normed))
         for i in range(len(forces)):
             forces_for_arrangement = []
             for j in range(num_forces_per_arrangement):
@@ -74,7 +76,7 @@ class MDForcesPredictor:
         cart_forces = []
         k = int(np.sqrt(forces.shape[1]))
         for i in range(len(forces)):
-            internal_inv = inv(internal_reps_normed[i])
+            internal_inv = pinv(internal_reps_normed[i])
             cart_forces.append([ internal_inv.dot(forces[i][j:j+k]) for j in range(0, forces.shape[1], k) ])
         return cart_forces
 
