@@ -54,3 +54,6 @@ def compute_iv_distance(x_1, x_2, variances):
         dist += partial_dist
     dist /= k
     return dist
+
+def indices_of_relevant_examples(curr_case, potential_examples, threshold=0.01):
+    bool_arr = np.array([ compute_iv_distance(x_1, x_2)])

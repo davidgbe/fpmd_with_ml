@@ -10,7 +10,7 @@ import gc
 class MDForcesPredictor:
     @staticmethod
     def predict(data_path):
-        start = 2000
+        start = 3000
         end = 6000
 
         # write first number of first arrangement used to make internal rep data in file
@@ -22,7 +22,7 @@ class MDForcesPredictor:
 
         to_sample = [feature_mats, internal_reps_normed, forces, forces_k_space]      
         # sample only necessary examples 
-        num_examples = 800
+        num_examples = 300
         (feature_mats, internal_reps_normed, forces, forces_k_space) = utilities.sample_population(to_sample, size=(num_examples + 50))
 
         # free up examples not being used
