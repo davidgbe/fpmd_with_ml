@@ -11,7 +11,7 @@ class MDForcesPredictor:
     @staticmethod
     def predict(data_path):
         start = 2000
-        end = 3000
+        end = 6000
 
         # write first number of first arrangement used to make internal rep data in file
         internal_reps = MDForcesPredictor.load_data(data_path + '/iv_reps_108_1_to_6_half.txt', start - 1000, end - 1000)
@@ -22,19 +22,20 @@ class MDForcesPredictor:
 
         # split into training and testing populations
         to_sample = [feature_mats, internal_reps_normed, forces, forces_k_space]
-        num_to_test = 10
-        (testing, training) = utilities.sample_populations(to_sample, size=num_to_test, remove=True )
+        num_to_test = 100
+        (testing, training) = utilities.sample_populations(to_sample, size=num_to_test, remove=True)
         (feature_mats_testing, internal_reps_normed_testing, forces_testing, forces_k_space_testing) = testing
-        (feature_mats_training, internal_reps_normed_training, forces_training, forces_k_space_training) = training
+        print(training[0].size)
+        (feature_mats_training, internal_reps_normed_training, forces_training, forces_k_space_training) = utilities.sample_populations(training, size=800)[0]
 
         gp = GP()
 
-        predictions = gp.predict(feature_mats_training, forces_k_space_training, feature_mats_training[:50])
-        predicted_cart_forces = MDForcesPredictor.convert_internal_forces_to_cartesian(predictions, internal_reps_normed_training[:50])
+        predictions = gp.predict(feature_mats_training, forces_k_space_training, feature_mats_testing)
+        predicted_cart_forces = MDForcesPredictor.convert_internal_forces_to_cartesian(predictions, internal_reps_normed_testing)
 
         errors = []
 
-        for real_example, predicted in zip(forces_training[:50], predicted_cart_forces):
+        for real_example, predicted in zip(forces_testing, predicted_cart_forces):
             for real_forces, predicted_forces in zip(real_example, predicted): 
                 print('Example:')
                 print(real_forces)
