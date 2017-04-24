@@ -41,7 +41,7 @@ def compute_feature_mat_scale_factors(feature_mats):
         all_variances.append(row_variance)
     return all_variances
 
-def compute_iv_distance(x_1, x_2, variances):
+def compute_iv_distance(x_1, x_2):
     dist = 0
     if x_1.shape != x_2.shape:
         raise ValueError('Features matrices must have the same dimensions!')
@@ -50,10 +50,13 @@ def compute_iv_distance(x_1, x_2, variances):
         partial_dist = 0
         for row in range(k):
             partial_dist += (x_1[k*row + col] - x_2[k*row + col])**2
-        partial_dist /= variances[col]
         dist += partial_dist
-    dist /= k
+    dist /= (k**2)
     return dist
 
 def indices_of_relevant_examples(curr_case, potential_examples, threshold=0.01):
-    bool_arr = np.array([ compute_iv_distance(x_1, x_2)])
+    indices = []
+    for i in range(len(potential_examples)):
+        if compute_iv_distance(curr_case, ex) <= threshold:
+            indices.append(i)
+    return indices

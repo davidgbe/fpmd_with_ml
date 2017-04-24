@@ -71,7 +71,7 @@ class GaussianProcess:
         (X, mean_X, std_X) = normalize(X)
         (Y, mean_Y, std_Y) = normalize(Y)
 
-        self.hyperparams['iv_dist_scales'] = compute_feature_mat_scale_factors(X)
+        # self.hyperparams['iv_dist_scales'] = compute_feature_mat_scale_factors(X)
 
         # preprocess target X with respect to X
         target_X -= mean_X
