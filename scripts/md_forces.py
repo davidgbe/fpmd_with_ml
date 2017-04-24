@@ -11,7 +11,7 @@ class MDForcesPredictor:
     @staticmethod
     def predict(data_path):
         start = 2000
-        end = 2500
+        end = 3000
 
         # write first number of first arrangement used to make internal rep data in file
         internal_reps = MDForcesPredictor.load_data(data_path + '/iv_reps_108_1_to_6_half.txt', start - 1000, end - 1000)
