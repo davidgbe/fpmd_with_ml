@@ -18,7 +18,9 @@ class MDForcesPredictor:
         internal_reps_normed = [ iv_utilities.normalize_mat(rep) for rep in internal_reps ]
         forces = MDForcesPredictor.load_data(data_path + '/for_108_7000TEST.txt', start, end)
         forces_k_space = MDForcesPredictor.convert_forces_to_internal(forces, internal_reps_normed)
-        feature_mats = MDForcesPredictor.produce_feature_mats(internal_reps) 
+        feature_mats = MDForcesPredictor.produce_feature_mats(internal_reps)
+
+        del internal_reps
 
         # split into training and testing populations
         to_sample = [feature_mats, internal_reps_normed, forces, forces_k_space]
@@ -30,6 +32,7 @@ class MDForcesPredictor:
         utilities.print_memory()
 
         # get rid of unused examples
+        del training
         del feature_mats
         del internal_reps_normed
         del forces
