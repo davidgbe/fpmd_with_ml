@@ -4,6 +4,7 @@ import multiprocessing as mp
 import resource
 import psutil
 import pickle
+from copy import deepcopy
 # import matplotlib.pyplot as plt
 
 def create_pool(cores=None):
@@ -109,9 +110,9 @@ def sample_populations(args, size=None, fraction=None, remove=False):
         size = available_indices
     num_choices = size if size is not None else int(fraction * iter_length)
     indices = np.random.choice(available_indices, num_choices, replace=False)
-    sampled = list(map(lambda l: extract_indices_in_order(l, indices), args))
+    sampled = deepcopy(list(map(lambda l: extract_indices_in_order(l, indices), args)))
     if remove:
-        leftovers = list(map(lambda l: remove_indices(l, indices), args))
+        leftovers = deepcopy(list(map(lambda l: remove_indices(l, indices), args)))
         return (sampled, leftovers)
     return (sampled, None)
 

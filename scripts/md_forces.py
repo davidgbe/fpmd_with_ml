@@ -10,8 +10,8 @@ import gc
 class MDForcesPredictor:
     @staticmethod
     def predict(data_path):
-        start = 2000
-        end = 6000
+        start = 2600
+        end = 6400
 
         # write first number of first arrangement used to make internal rep data in file
         internal_reps = MDForcesPredictor.load_data(data_path + '/iv_reps_108_1_to_6_half.txt', start - 1000, end - 1000)
@@ -22,14 +22,25 @@ class MDForcesPredictor:
 
         # split into training and testing populations
         to_sample = [feature_mats, internal_reps_normed, forces, forces_k_space]
-        num_to_test = 20
+        num_to_test = 100
         (testing, training) = utilities.sample_populations(to_sample, size=num_to_test, remove=True)
         (feature_mats_testing, internal_reps_normed_testing, forces_testing, forces_k_space_testing) = testing
-        (feature_mats_training, internal_reps_normed_training, forces_training, forces_k_space_training) = training
+        (feature_mats_training, internal_reps_normed_training, forces_training, forces_k_space_training) = utilities.sample_populations(training, size=800)[0]
+
+        utilities.print_memory()
+
+        # get rid of unused examples
+        del feature_mats
+        del internal_reps_normed
+        del forces
+        del forces_k_space
+        gc.collect()
+
+        utilities.print_memory()
 
         gp = GP()
 
-        predictions = gp.screened_predict(feature_mats_training, forces_k_space_training, feature_mats_testing)
+        predictions = gp.predict(feature_mats_training, forces_k_space_training, feature_mats_testing)
         predicted_cart_forces = MDForcesPredictor.convert_internal_forces_to_cartesian(predictions, internal_reps_normed_testing)
 
         errors = []
