@@ -74,9 +74,10 @@ class GaussianProcess:
 
         return (self.batch_predict(X, Y, target_X) * std_Y + mean_Y)
 
-    def screened_predict(self, X, Y, target_X, threshold=3):
+    def screened_predict(self, X, Y, target_X, threshold=2.5):
         predictions = []
         for i in range(len(target_X)):
+            print("Prediction #%d" % i)
             distances = cartesian_operation(X, target_X[i, :], function=compute_iv_distance)
             print('Prediction:')
             print(distances)
