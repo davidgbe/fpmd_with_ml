@@ -92,15 +92,15 @@ def extract_indices_in_order(iterable, order):
 
 def remove_indices(iterable, indices):
     if type(iterable) == np.ndarray:
-        return iterable[~indices, :]
+        return np.delete(iterable, indices, axis=0)
     else:
         cleaned = []
         s = sorted(indices)
-        s.insert(0, 0)
         for i in range(len(s)):
             curr_idx = s[i]
-            next_idx = next_idx if i + 1 < len(s) else -1
+            next_idx = s[i+1] if i + 1 < len(s) else -1
             cleaned += iterable[curr_idx:next_idx]
+        return cleaned
 
 def sample_populations(args, size=None, fraction=None, remove=False):
     available_indices = len(args[0])

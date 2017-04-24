@@ -8,7 +8,7 @@ from functools import partial
 from .utilities import create_pool, save_params, load_params, zero_mean, normalize
 from .grid_search import grid_search
 import os
-from lib.internal_vector.utilities import compute_feature_mat_scale_factors
+from lib.internal_vector.utilities import compute_feature_mat_scale_factors, compute_iv_distance
 from copy import deepcopy
 
 class GaussianProcess:
@@ -24,10 +24,7 @@ class GaussianProcess:
 
     def single_predict(self, target_x, training_cov_inv, Y, X, cached_pool=None):
         training_target_cov = cartesian_operation(X, target_x, function=self.covariance_func, cached_pool=cached_pool)
-        print(target_x.shape)
-        print('THE MEAN')
-        print(training_target_cov.mean())
-        print(training_target_cov.shape)
+        print('Predicting...')
         #target_cov = self.compute_covariance(target_x)
         means = training_target_cov.T.dot(training_cov_inv).dot(Y)
         #stdevs = target_cov - training_target_cov.T.dot(training_cov_inv).dot(training_target_cov)
@@ -71,13 +68,38 @@ class GaussianProcess:
         (X, mean_X, std_X) = normalize(X)
         (Y, mean_Y, std_Y) = normalize(Y)
 
-        # self.hyperparams['iv_dist_scales'] = compute_feature_mat_scale_factors(X)
-
         # preprocess target X with respect to X
         target_X -= mean_X
         target_X = np.divide(target_X, std_X)
 
         return (self.batch_predict(X, Y, target_X) * std_Y + mean_Y)
+
+    def screened_predict(self, X, Y, target_X, threshold=3):
+        predictions = []
+        for i in range(len(target_X)):
+            distances = cartesian_operation(X, target_X[i, :], function=compute_iv_distance)
+            print('Prediction:')
+            print(distances)
+            good_examples_indices = np.where(distances < threshold)[0]
+            print(len(good_examples_indices))
+
+            # select only relevant examples
+            screened_X = np.take(X, good_examples_indices, axis=0)
+            screened_Y = np.take(Y, good_examples_indices, axis=0)
+
+            # normalize screen pool
+            (screened_X, mean_X, std_X) = normalize(screened_X)
+            (screened_Y, mean_Y, std_Y) = normalize(screened_Y)
+
+            # compute covariances
+            screened_training_target_cov = cartesian_operation(screened_X, target_X[i, :], function=self.covariance_func)
+            screened_training_cov = cartesian_operation(screened_X, function=self.covariance_func)
+
+            mean = screened_training_target_cov.T.dot(inv(screened_training_cov)).dot(screened_Y)
+            mean = mean.reshape(mean.size)
+
+            predictions.append(mean * std_Y + mean_Y)
+        return np.array(predictions)
 
     def fit(self, X, Y):
         print('Generating length scales...')

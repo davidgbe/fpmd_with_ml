@@ -10,7 +10,7 @@ import gc
 class MDForcesPredictor:
     @staticmethod
     def predict(data_path):
-        start = 3000
+        start = 2000
         end = 6000
 
         # write first number of first arrangement used to make internal rep data in file
@@ -18,27 +18,26 @@ class MDForcesPredictor:
         internal_reps_normed = [ iv_utilities.normalize_mat(rep) for rep in internal_reps ]
         forces = MDForcesPredictor.load_data(data_path + '/for_108_7000TEST.txt', start, end)
         forces_k_space = MDForcesPredictor.convert_forces_to_internal(forces, internal_reps_normed)
-        feature_mats = MDForcesPredictor.produce_feature_mats(internal_reps)
+        feature_mats = MDForcesPredictor.produce_feature_mats(internal_reps) 
 
-        to_sample = [feature_mats, internal_reps_normed, forces, forces_k_space]      
-        # sample only necessary examples 
-        num_to_test = 120
-        (testing, training) = utilities.sample_populations(to_sample, size=num_to_test)
-
-        # free up examples not being used
-        del to_sample
-        gc.collect()
-
-        training_test_divide = num_examples
+        # split into training and testing populations
+        to_sample = [feature_mats, internal_reps_normed, forces, forces_k_space]
+        num_to_test = 12
+        (testing, training) = utilities.sample_populations(to_sample, size=num_to_test, remove=True )
+        (feature_mats_testing, internal_reps_normed_testing, forces_testing, forces_k_space_testing) = testing
+        (feature_mats_training, internal_reps_normed_training, forces_training, forces_k_space_training) = training
+        print(feature_mats.shape)
+        print(feature_mats_training.shape)
+        print(feature_mats_testing.shape)
 
         gp = GP()
 
-        predictions = gp.predict(feature_mats[:training_test_divide], forces_k_space[:training_test_divide], feature_mats[training_test_divide:])
-        predicted_cart_forces = MDForcesPredictor.convert_internal_forces_to_cartesian(predictions, internal_reps_normed)
+        predictions = gp.screened_predict(feature_mats_training, forces_k_space_training, feature_mats_testing)
+        predicted_cart_forces = MDForcesPredictor.convert_internal_forces_to_cartesian(predictions, internal_reps_normed_testing)
 
         errors = []
 
-        for real_example, predicted in zip(forces[training_test_divide:], predicted_cart_forces):
+        for real_example, predicted in zip(forces_testing, predicted_cart_forces):
             for real_forces, predicted_forces in zip(real_example, predicted): 
                 print('Example:')
                 print(real_forces)
