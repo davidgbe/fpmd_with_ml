@@ -22,8 +22,8 @@ class MDForcesPredictor:
 
         to_sample = [feature_mats, internal_reps_normed, forces, forces_k_space]      
         # sample only necessary examples 
-        num_examples = 950
-        (feature_mats, internal_reps_normed, forces, forces_k_space) = utilities.sample_population(to_sample, size=(num_examples + 100))
+        num_to_test = 120
+        (testing, training) = utilities.sample_populations(to_sample, size=num_to_test)
 
         # free up examples not being used
         del to_sample

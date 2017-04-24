@@ -90,14 +90,28 @@ def extract_indices_in_order(iterable, order):
     else:
         return reorder(iterable, order)
 
-def sample_population(args, size=None, fraction=None):
+def remove_indices(iterable, indices):
+    if type(iterable) == np.ndarray:
+        return iterable[~indices, :]
+    else:
+        cleaned = []
+        s = sorted(indices)
+        s.insert(0, 0)
+        for i in range(len(s)):
+            curr_idx = s[i]
+            next_idx = next_idx if i + 1 < len(s) else -1
+            cleaned += iterable[curr_idx:next_idx]
+
+def sample_populations(args, size=None, fraction=None, remove=False):
     available_indices = len(args[0])
     # if no params are provided, just use entire dataset and reorder it
     if size is None and fraction is None:
         size = available_indices
     num_choices = size if size is not None else int(fraction * iter_length)
     indices = np.random.choice(available_indices, num_choices, replace=False)
-    print('index size')
-    print(indices.size)
-    return list(map(lambda l: extract_indices_in_order(l, indices), args))
+    sampled = list(map(lambda l: extract_indices_in_order(l, indices), args))
+    if remove:
+        leftovers = list(map(lambda l: remove_indices(l, indices), args))
+        return (sampled, leftovers)
+    return (sampled, None)
 
