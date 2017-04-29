@@ -99,7 +99,7 @@ def boundary_cond_dist(position1, position2, L_star):
 # The engine!
 class MDEngine:
     # Initialization
-    def __init__(self, num_particles = 256, out_file_name = None):
+    def __init__(self, num_particles = 256, en_file_name = None, pos_file_name = None, force_file_name = None):
 
         self.num_particles = num_particles                                  # Number of particles
         self.T_star = 1.                                                    # Dimensionless Temperature
@@ -108,16 +108,13 @@ class MDEngine:
         self.r_c_star = 2.5                                                 # Dimensionless cut off length
         self.del_t = 0.005                                                  # Dimensionless time
 
-        # Open files for position and force printing
-        self.posfile = open("../velver_engine_outputs/pos_asd.txt", 'w')
-        self.forcefile = open("../velver_engine_outputs/for_asd.txt", 'w')
-
-        # Open file for energies to be written to
-        self.has_ofile = 0
-        if(out_file_name != None):
-            self.has_ofile = 1
-            out_file_name = "../velver_engine_outputs/" + out_file_name
-            self.ofile = open(out_file_name, 'w')
+        # Open files for energy, position, and force printing
+        en_file_name = "../velver_engine_outputs/" + en_file_name
+        self.enfile = open(en_file_name, 'w')
+        pos_file_name = "../velver_engine_outputs/" + pos_file_name
+        self.posfile = open(pos_file_name, 'w')
+        force_file_name = "../velver_engine_outputs/" + force_file_name
+        self.forcefile = open(force_file_name, 'w')
 
         # Generate matrices to get started
         self.initialize_grid()
@@ -128,15 +125,15 @@ class MDEngine:
         self.tau_accel_mat = np.zeros((self.num_particles, 3))
         self.calculate_tau_accels_pot_energy()
         self.calculate_total_energies()
-        if(self.has_ofile):
-            self.ofile.write(str(self.total_kin_energy/self.num_particles))
-            self.ofile.write(",")
-            self.ofile.write(str(self.total_pot_energy/self.num_particles))
-            self.ofile.write(",")
-            self.ofile.write(str(self.energy_per_particle))
-            self.ofile.write(",")
-            self.ofile.write(str((2./3)*find_kin_energy(self.tau_velo_mat)/(self.num_particles)))
-            self.ofile.write("\n")
+        # Write to energy file
+        self.enfile.write(str(self.total_kin_energy/self.num_particles))
+        self.enfile.write(",")
+        self.enfile.write(str(self.total_pot_energy/self.num_particles))
+        self.enfile.write(",")
+        self.enfile.write(str(self.energy_per_particle))
+        self.enfile.write(",")
+        self.enfile.write(str((2./3)*find_kin_energy(self.tau_velo_mat)/(self.num_particles)))
+        self.enfile.write("\n")
 
 
         # Do first step, which is done differently due to not having position history
@@ -145,15 +142,15 @@ class MDEngine:
         # Fix the tau_velos for current temperature
         self.fix_tau_velos()
         self.calculate_total_energies()
-        if(self.has_ofile):
-            self.ofile.write(str(self.total_kin_energy/self.num_particles))
-            self.ofile.write(",")
-            self.ofile.write(str(self.total_pot_energy/self.num_particles))
-            self.ofile.write(",")
-            self.ofile.write(str(self.energy_per_particle))
-            self.ofile.write(",")
-            self.ofile.write(str((2./3)*find_kin_energy(self.tau_velo_mat)/(self.num_particles)))
-            self.ofile.write("\n")
+        # Write to energy file
+        self.enfile.write(str(self.total_kin_energy/self.num_particles))
+        self.enfile.write(",")
+        self.enfile.write(str(self.total_pot_energy/self.num_particles))
+        self.enfile.write(",")
+        self.enfile.write(str(self.energy_per_particle))
+        self.enfile.write(",")
+        self.enfile.write(str((2./3)*find_kin_energy(self.tau_velo_mat)/(self.num_particles)))
+        self.enfile.write("\n")
 
     ##### GRID GRID GRID!!! #####
     ### Grid method used to prevent all n atoms from checking all n other atoms
@@ -424,21 +421,20 @@ class MDEngine:
                 self.forcefile.write(str(self.tau_accel_mat[i,2]))
                 self.forcefile.write("\n")
 
-            if(self.has_ofile):
-                self.ofile.write(str(self.total_kin_energy/self.num_particles))
-                self.ofile.write(",")
-                self.ofile.write(str(self.total_pot_energy/self.num_particles))
-                self.ofile.write(",")
-                self.ofile.write(str(self.energy_per_particle))
-                self.ofile.write(",")
-                self.ofile.write(str((2./3)*find_kin_energy(self.tau_velo_mat)/(self.num_particles)))
-                self.ofile.write("\n")
+            self.enfile.write(str(self.total_kin_energy/self.num_particles))
+            self.enfile.write(",")
+            self.enfile.write(str(self.total_pot_energy/self.num_particles))
+            self.enfile.write(",")
+            self.enfile.write(str(self.energy_per_particle))
+            self.enfile.write(",")
+            self.enfile.write(str((2./3)*find_kin_energy(self.tau_velo_mat)/(self.num_particles)))
+            self.enfile.write("\n")
 
 # Actual running of program
-if(len(sys.argv) != 4):
+if(len(sys.argv) != 6):
     print("\nUsage:")
-    print("\t" + sys.argv[0] + " [number of particles] [number of steps] [energies outfile name]")
+    print("\t" + sys.argv[0] + " [number of particles] [number of steps] [energies outfile name] [position outfile name] [forces outfile name]")
     exit()
 else:
-    my_engine = MDEngine(int(sys.argv[1]), sys.argv[3])
+    my_engine = MDEngine(int(sys.argv[1]), sys.argv[3], sys.argv[4], sys.argv[5])
     my_engine.drive_engine(int(sys.argv[2]))
