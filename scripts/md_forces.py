@@ -133,7 +133,7 @@ class MDForcesPredictor:
         for real_force_vec, predicted_force_vec in zip(actual_forces, predicted):
             print('vector:')
             for i in range(3):
-                if real_force_vec[i] < thresholds[i]:
+                if abs(real_force_vec[i]) > thresholds[i]:
                     print(real_force_vec[i])
                     print(predicted_force_vec[i])
                     error = abs(predicted_force_vec[i] - real_force_vec[i]) / abs(real_force_vec[i]) * 100
