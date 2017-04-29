@@ -99,7 +99,7 @@ def remove_indices(iterable, indices):
         cleaned = iterable[:s[0]]
         for i in range(len(s)):
             curr_idx = s[i] + 1
-            next_idx = s[i+1] if i + 1 < len(s) else -1
+            next_idx = s[i+1] if i + 1 < len(s) else len(iterable)
             cleaned += iterable[curr_idx:next_idx]
         return cleaned
 

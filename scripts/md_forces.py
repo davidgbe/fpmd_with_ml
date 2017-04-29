@@ -27,7 +27,7 @@ class MDForcesPredictor:
         num_to_test = 100
         (testing, training) = utilities.sample_populations(to_sample, size=num_to_test, remove=True)
         (feature_mats_testing, internal_reps_normed_testing, forces_testing, forces_k_space_testing) = testing
-        (feature_mats_training, internal_reps_normed_training, forces_training, forces_k_space_training) = utilities.sample_populations(training, size=1000)[0]
+        (feature_mats_training, internal_reps_normed_training, forces_training, forces_k_space_training) = utilities.sample_populations(training, size=100)[0]
 
         utilities.print_memory()
 
@@ -131,8 +131,11 @@ class MDForcesPredictor:
         errors = []
         thresholds = np.absolute(actual_forces).mean(0) * error_tolerance
         for real_force_vec, predicted_force_vec in zip(actual_forces, predicted):
+            print('vector:')
             for i in range(3):
                 if real_force_vec[i] < thresholds[i]:
+                    print(real_force_vec[i])
+                    print(predicted_force_vec[i])
                     error = abs(predicted_force_vec[i] - real_force_vec[i]) / abs(real_force_vec[i]) * 100
                     errors.append(error)
         print(errors)
