@@ -95,10 +95,10 @@ def remove_indices(iterable, indices):
     if type(iterable) == np.ndarray:
         return np.delete(iterable, indices, axis=0)
     else:
-        cleaned = []
         s = sorted(indices)
+        cleaned = iterable[:s[0]]
         for i in range(len(s)):
-            curr_idx = s[i]
+            curr_idx = s[i] + 1
             next_idx = s[i+1] if i + 1 < len(s) else -1
             cleaned += iterable[curr_idx:next_idx]
         return cleaned
@@ -110,6 +110,8 @@ def sample_populations(args, size=None, fraction=None, remove=False):
         size = available_indices
     num_choices = size if size is not None else int(fraction * iter_length)
     indices = np.random.choice(available_indices, num_choices, replace=False)
+    print(len(indices))
+    print(list(map(lambda x: len(x), args)))
     sampled = deepcopy(list(map(lambda l: extract_indices_in_order(l, indices), args)))
     if remove:
         leftovers = deepcopy(list(map(lambda l: remove_indices(l, indices), args)))

@@ -27,7 +27,7 @@ class MDForcesPredictor:
         num_to_test = 100
         (testing, training) = utilities.sample_populations(to_sample, size=num_to_test, remove=True)
         (feature_mats_testing, internal_reps_normed_testing, forces_testing, forces_k_space_testing) = testing
-        (feature_mats_training, internal_reps_normed_training, forces_training, forces_k_space_training) = utilities.sample_populations(training, size=800)[0]
+        (feature_mats_training, internal_reps_normed_training, forces_training, forces_k_space_training) = utilities.sample_populations(training, size=1000)[0]
 
         utilities.print_memory()
 
@@ -48,15 +48,10 @@ class MDForcesPredictor:
 
         errors = []
 
-        for real_example, predicted in zip(forces_testing, predicted_cart_forces):
-            for real_forces, predicted_forces in zip(real_example, predicted): 
-                print('Example:')
-                print(real_forces)
-                print(predicted_forces)
-                diff = predicted_forces - real_forces
-                errors.append(np.sqrt(diff.dot(diff) / real_forces.dot(real_forces)) * 100)
+        predicted_cart_forces = np.array([ force_vec for forces_for_arrangement in predicted_cart_forces for force_vec in forces_for_arrangement ])
+        forces_testing = np.array([ force_vec for forces_for_arrangement in forces_testing for force_vec in forces_for_arrangement ])
 
-        print(np.average(errors))
+        MDForcesPredictor.calc_force_error(forces_testing, predicted_cart_forces)
 
     @staticmethod
     def produce_internal():
@@ -130,6 +125,18 @@ class MDForcesPredictor:
             for i in range(example.shape[0]):
                 csv_writer.writerow(example[i])
         data_file.close()
+
+    @staticmethod
+    def calc_force_error(actual_forces, predicted, error_tolerance=0.03):
+        errors = []
+        thresholds = np.absolute(actual_forces).mean(0) * error_tolerance
+        for real_force_vec, predicted_force_vec in zip(actual_forces, predicted):
+            for i in range(3):
+                if real_force_vec[i] < thresholds[i]:
+                    error = abs(predicted_force_vec[i] - real_force_vec[i]) / abs(real_force_vec[i]) * 100
+                    errors.append(error)
+        print(errors)
+        print(np.average(errors))
 
 MDForcesPredictor.predict(sys.argv[1])
 #MDForcesPredictor.produce_internal()
