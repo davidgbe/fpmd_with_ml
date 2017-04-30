@@ -24,10 +24,10 @@ class MDForcesPredictor:
 
         # split into training and testing populations
         to_sample = [feature_mats, internal_reps_normed, forces, forces_k_space]
-        num_to_test = 300
+        num_to_test = 400
         (testing, training) = utilities.sample_populations(to_sample, size=num_to_test, remove=True)
         (feature_mats_testing, internal_reps_normed_testing, forces_testing, forces_k_space_testing) = testing
-        (feature_mats_training, internal_reps_normed_training, forces_training, forces_k_space_training) = utilities.sample_populations(training, size=1500)[0]
+        (feature_mats_training, internal_reps_normed_training, forces_training, forces_k_space_training) = utilities.sample_populations(training, size=1100)[0]
 
         utilities.print_memory()
 
