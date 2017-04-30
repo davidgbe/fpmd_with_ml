@@ -139,6 +139,7 @@ class MDForcesPredictor:
                     error = abs(predicted_force_vec[i] - real_force_vec[i]) / abs(real_force_vec[i]) * 100
                     errors.append(error)
         print(errors)
+        print(np.median(errors))
         print(np.average(errors))
 
 MDForcesPredictor.predict(sys.argv[1])
