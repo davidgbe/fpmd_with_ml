@@ -197,6 +197,6 @@ class MDForcesPredictor:
         print(np.median(errors))
         print(np.average(errors))
 
-MDForcesPredictor.predict(sys.argv[1], float(sys.argv[2]))
+MDForcesPredictor.predict(sys.argv[1], int(sys.argv[2]))
 #MDForcesPredictor.produce_internal()
 #MDForcesPredictor.load_new_data()
