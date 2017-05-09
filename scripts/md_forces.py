@@ -165,7 +165,7 @@ class MDForcesPredictor:
 
     @staticmethod
     def calc_force_error(actual_forces, predicted, error_tolerance=0.03):
-        err_file = open("../err_" + error_tolerance + "_" + actual_forces.size + ".txt", 'w')
+        #err_file = open("../err_" + error_tolerance + "_" + actual_forces.size + ".txt", 'w')
         errors = []
         thresholds = 2 * np.absolute(actual_forces).mean(0) * error_tolerance
         for real_force_vec, predicted_force_vec in zip(actual_forces, predicted):
@@ -179,7 +179,7 @@ class MDForcesPredictor:
 
                 error = abs(predicted_force_vec[i] - real_force_vec[i]) / abs(real_force_vec[i]) * 100
                 # Added line below for writing values and error to error file
-                err_file.write(str(real_force_vec[i]) + "," + str(predicted_force_vec[i]) + "," + str(error) + "\n")
+                # err_file.write(str(real_force_vec[i]) + "," + str(predicted_force_vec[i]) + "," + str(error) + "\n")
                 if abs(real_force_vec[i]) > thresholds[i]:
                     print(real_force_vec[i])
                     print(predicted_force_vec[i])
