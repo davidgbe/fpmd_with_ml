@@ -165,16 +165,34 @@ class MDForcesPredictor:
 
     @staticmethod
     def calc_force_error(actual_forces, predicted, error_tolerance=0.03):
+        err_file = open("../err_" + error_tolerance + "_" + actual_forces.size + ".txt", 'w')
         errors = []
         thresholds = 2 * np.absolute(actual_forces).mean(0) * error_tolerance
         for real_force_vec, predicted_force_vec in zip(actual_forces, predicted):
             print('vector:')
             for i in range(3):
+
+### DAVID: there are two options for the file writing, the first, which is not commented out, creates
+### an error file tracking all forces and errors, but only printing those that are not cut out by the
+### threshold you set. I think this is preferable as it allows us to retain all of the data, but if
+### you'd rather only keep track of what we're printing, there is a commented out second version below
+
+                error = abs(predicted_force_vec[i] - real_force_vec[i]) / abs(real_force_vec[i]) * 100
+                # Added line below for writing values and error to error file
+                err_file.write(str(real_force_vec[i]) + "," + str(predicted_force_vec[i]) + "," + str(error) + "\n")
                 if abs(real_force_vec[i]) > thresholds[i]:
                     print(real_force_vec[i])
                     print(predicted_force_vec[i])
-                    error = abs(predicted_force_vec[i] - real_force_vec[i]) / abs(real_force_vec[i]) * 100
                     errors.append(error)
+
+                # if abs(real_force_vec[i]) > thresholds[i]:
+                #     print(real_force_vec[i])
+                #     print(predicted_force_vec[i])
+                #     error = abs(predicted_force_vec[i] - real_force_vec[i]) / abs(real_force_vec[i]) * 100
+                #     errors.append(error)
+                #     # Added line below for writing values and error to error file
+                #     err_file.write(str(real_force_vec[i]) + "," + str(predicted_force_vec[i]) + "," + str(error) + "\n")
+
         print(errors)
         print(np.median(errors))
         print(np.average(errors))
