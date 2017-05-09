@@ -9,7 +9,7 @@ import gc
 
 class MDForcesPredictor:
     @staticmethod
-    def predict(data_path):
+    def predict(data_path, training_size=1000):
         start = 2600
         end = 6400
 
@@ -27,7 +27,7 @@ class MDForcesPredictor:
         num_to_test = 200
         (testing, training) = utilities.sample_populations(to_sample, size=num_to_test, remove=True)
         (feature_mats_testing, internal_reps_normed_testing, forces_testing, forces_k_space_testing) = testing
-        (feature_mats_training, internal_reps_normed_training, forces_training, forces_k_space_training) = utilities.sample_populations(training, size=1000)[0]
+        (feature_mats_training, internal_reps_normed_training, forces_training, forces_k_space_training) = utilities.sample_populations(training, size=training_size)[0]
 
         utilities.print_memory()
 
@@ -59,6 +59,12 @@ class MDForcesPredictor:
         end = 6500
         internal_reps = MDForcesPredictor.load_arrangements_in_internal('../datasets/md/posfile_7000step_108part.txt', start, end)
         MDForcesPredictor.write_data('../datasets/md/iv_reps_108_all.txt', internal_reps)
+
+    @staticmethod
+    def load_new_data():
+        all_positions, all_forces = MDForcesPredictor.alternate_load_data('../datasets/lj.dat', 0, 1000)
+        print(all_positions)
+        print(all_forces)
 
     @staticmethod
     def produce_feature_mats(internal_reps):
@@ -115,6 +121,37 @@ class MDForcesPredictor:
         data_file.close()
         return all_data[start:]
 
+    # for Guoqing's file format
+    @staticmethod
+    def alternate_load_data(rel_path, start=0, end=None):
+        data_file = open(utilities.file_path(__file__, rel_path), 'r')
+        parsed_csv = csv.reader(data_file, delimiter=',')
+
+        all_positions = []
+        all_forces = []
+
+        arrangement_positions = []
+        arrangement_forces = []
+        reading = False
+        count = 0
+        for row in parsed_csv:
+            if ' '.join(row).startswith('ITEM: ATOMS id x y z fx fy fz'):
+                reading = True
+                count += 1
+            elif reading == True:
+                if row[0] == 'ITEM:':
+                    reading = False
+                    all_positions.append(np.array(arrangement_positions))
+                    all_forces.append(np.array(arrangement_forces))
+                    arrangement_positions = []
+                    arrangement_forces = []
+                    if count == end:
+                        return all_positions, all_forces
+                else:
+                    arrangement_positions.append(list(map(lambda x: float(x), row[1:4])))
+                    arrangement_forces.append(list(map(lambda x: float(x), row[4:])))
+        return all_positions, all_forces
+
     @staticmethod
     def write_data(rel_path, data):
         data_file = open(utilities.file_path(__file__, rel_path), 'w')
@@ -129,7 +166,7 @@ class MDForcesPredictor:
     @staticmethod
     def calc_force_error(actual_forces, predicted, error_tolerance=0.03):
         errors = []
-        thresholds = np.absolute(actual_forces).mean(0) * error_tolerance
+        thresholds = 2 * np.absolute(actual_forces).mean(0) * error_tolerance
         for real_force_vec, predicted_force_vec in zip(actual_forces, predicted):
             print('vector:')
             for i in range(3):
@@ -142,5 +179,6 @@ class MDForcesPredictor:
         print(np.median(errors))
         print(np.average(errors))
 
-MDForcesPredictor.predict(sys.argv[1])
+MDForcesPredictor.predict(sys.argv[1], float(sys.argv[2]))
 #MDForcesPredictor.produce_internal()
+#MDForcesPredictor.load_new_data()
