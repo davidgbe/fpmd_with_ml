@@ -6,8 +6,35 @@ from lib.gaussian_process.model import GaussianProcess as GP
 from numpy.linalg import pinv
 import sys
 import gc
+import matplotlib.pyplot as plt
 
 class MDForcesPredictor:
+
+    def predict(arrangements):
+        pass
+
+    def fit(arrangements, forces):
+        internal_reps = MDForcesPredictor.produce_internal_from_arrangements(arrangements)
+        internal_reps_normed = [ iv_utilities.normalize_mat(rep) for rep in internal_reps ]
+        forces_k_space = MDForcesPredictor.convert_forces_to_internal(forces, internal_reps_normed)
+        feature_mats = MDForcesPredictor.produce_feature_mats(internal_reps)
+
+        num_examples = len(internal_reps)
+
+        del internal_reps
+
+        training_examples = [feature_mats, internal_reps_normed, forces_k_space]
+        (feature_mats_training, internal_reps_normed_training, forces_k_space_training) = utilities.sample_populations(training_examples, size=num_examples)[0]
+
+        # get rid of unused examples
+        del training_examples
+        del feature_mats
+        del internal_reps_normed
+        del forces
+        del forces_k_space
+
+        self.gp = GP()
+
     @staticmethod
     def predict(data_path, training_size=1000):
         start = 2600
@@ -62,9 +89,43 @@ class MDForcesPredictor:
 
     @staticmethod
     def load_new_data():
-        all_positions, all_forces = MDForcesPredictor.alternate_load_data('../datasets/lj.dat', 0, 1000)
-        print(all_positions)
-        print(all_forces)
+        all_positions, all_forces = MDForcesPredictor.alternate_load_data('../datasets/lj.dat', 0, 500)
+
+        first_step = all_forces[0]
+
+        first_step_shortened = first_step[:108, :]
+        print(first_step_shortened)
+
+        last_step = all_forces[499]
+
+        last_step_shortened = first_step[:108, :]
+
+        all_steps = np.concatenate(all_forces)
+
+        all_steps_shortened = []
+        for i in range(0, len(all_forces), 1000):
+            all_steps_shortened.append(all_steps[i:i+108])
+        all_steps_shortened = np.concatenate(all_steps_shortened)
+
+
+        MDForcesPredictor.plot_force_dist(first_step, 'first')
+        MDForcesPredictor.plot_force_dist(last_step, 'last')
+        MDForcesPredictor.plot_force_dist(first_step_shortened, 'first_shortened')
+        MDForcesPredictor.plot_force_dist(last_step_shortened, 'last_shortened')
+
+        MDForcesPredictor.plot_force_dist(all_steps, 'all')
+        MDForcesPredictor.plot_force_dist(all_steps_shortened, 'all_shortened')
+
+
+
+    @staticmethod
+    def plot_force_dist(step, name):
+        for i in range(step.shape[1]):
+            coordinate_mags = step[:, i]
+            (mags, freq) = utilities.bucket(coordinate_mags, .05)
+            plt.plot(mags, freq, 'ro')
+            utilities.save_plot('dist_' + name + '_' + str(i))
+            plt.clf()
 
     @staticmethod
     def produce_feature_mats(internal_reps):
@@ -103,6 +164,13 @@ class MDForcesPredictor:
         return internal_reps
 
     @staticmethod
+    def produce_internal_from_arrangements(positions):
+        internal_reps = []
+        for arrangement in positions:
+            internal_reps.append(iv_utilities.produce_internal_basis(arrangement))
+        return internal_reps
+
+    @staticmethod
     def load_data(rel_path, start=0, end=None):
         data_file = open(utilities.file_path(__file__, rel_path), 'r')
         parsed_csv = csv.reader(data_file, delimiter=',')
@@ -125,7 +193,7 @@ class MDForcesPredictor:
     @staticmethod
     def alternate_load_data(rel_path, start=0, end=None):
         data_file = open(utilities.file_path(__file__, rel_path), 'r')
-        parsed_csv = csv.reader(data_file, delimiter=',')
+        parsed_csv = csv.reader(data_file, delimiter=' ')
 
         all_positions = []
         all_forces = []
@@ -149,7 +217,7 @@ class MDForcesPredictor:
                         return all_positions, all_forces
                 else:
                     arrangement_positions.append(list(map(lambda x: float(x), row[1:4])))
-                    arrangement_forces.append(list(map(lambda x: float(x), row[4:])))
+                    arrangement_forces.append(list(map(lambda x: float(x), row[4:7])))
         return all_positions, all_forces
 
     @staticmethod
@@ -197,6 +265,6 @@ class MDForcesPredictor:
         print(np.median(errors))
         print(np.average(errors))
 
-MDForcesPredictor.predict(sys.argv[1], int(sys.argv[2]))
+#MDForcesPredictor.predict(sys.argv[1], int(sys.argv[2]))
 #MDForcesPredictor.produce_internal()
-#MDForcesPredictor.load_new_data()
+MDForcesPredictor.load_new_data()
