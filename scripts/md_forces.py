@@ -103,8 +103,8 @@ class MDForcesPredictor:
         all_steps = np.concatenate(all_forces)
 
         all_steps_shortened = []
-        for i in range(0, len(all_forces), 1000):
-            all_steps_shortened.append(all_steps[i:i+108])
+        for i in range(0, all_steps.shape[0], 1000):
+            all_steps_shortened.append(all_steps[i:i+108, :])
         all_steps_shortened = np.concatenate(all_steps_shortened)
 
 
