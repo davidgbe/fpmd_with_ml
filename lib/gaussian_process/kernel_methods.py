@@ -6,6 +6,7 @@ from .utilities import create_pool
 import multiprocessing as mp
 from lib.internal_vector.utilities import compute_iv_distance
 from timeit import timeit
+from lib.parallel.utilities import parallel
 
 def covariance_exp_arg(x_1, x_2, hyperparams):
     return compute_iv_distance(x_1, x_2)
@@ -78,11 +79,7 @@ def cartesian_operation(X_1, X_2=None, function=None, cores=None, cached_pool=No
         async_results = cached_pool.map_async(operation, all_chunks).get()
     else:
         max_concurrent = cores if max_concurrent is None else max_concurrent
-        for i in range(0, len(all_chunks), max_concurrent):
-            pool = create_pool(max_concurrent)
-            async_results.append(pool.map_async(operation, all_chunks[i:i+max_concurrent]).get())
-            pool.close()
-            pool.join()
+        async_results = parallel(operation, all_chunks, max_concurrent, batch_size=1)
         async_results = [result for result_block in async_results for result in result_block]
 
     chunks_num_1 = int(ceil(float(rows_1) / chunk_size_1))

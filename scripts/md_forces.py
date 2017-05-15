@@ -1,5 +1,6 @@
 import csv
 from lib.gaussian_process import utilities
+from lib.parallel.utilities import parallel
 import numpy as np
 from lib.internal_vector import utilities as iv_utilities
 from lib.gaussian_process.model import GaussianProcess as GP
@@ -9,9 +10,6 @@ import gc
 import matplotlib.pyplot as plt
 
 class MDForcesPredictor:
-
-    def predict(arrangements):
-        pass
 
     def fit(arrangements, forces):
         internal_reps = MDForcesPredictor.produce_internal_from_arrangements(arrangements)
@@ -88,42 +86,21 @@ class MDForcesPredictor:
         MDForcesPredictor.write_data('../datasets/md/iv_reps_108_all.txt', internal_reps)
 
     @staticmethod
-    def load_new_data():
-        all_positions, all_forces = MDForcesPredictor.alternate_load_data('../datasets/lj.dat', 0, 500)
-
-        first_step = all_forces[0]
-
-        first_step_shortened = first_step[:108, :]
-        print(first_step_shortened)
-
-        last_step = all_forces[499]
-
-        last_step_shortened = first_step[:108, :]
-
-        all_steps = np.concatenate(all_forces)
-
-        all_steps_shortened = []
-        for i in range(0, all_steps.shape[0], 1000):
-            all_steps_shortened.append(all_steps[i:i+108, :])
-        all_steps_shortened = np.concatenate(all_steps_shortened)
-
-
-        MDForcesPredictor.plot_force_dist(first_step, 'first')
-        MDForcesPredictor.plot_force_dist(last_step, 'last')
-        MDForcesPredictor.plot_force_dist(first_step_shortened, 'first_shortened')
-        MDForcesPredictor.plot_force_dist(last_step_shortened, 'last_shortened')
-
-        MDForcesPredictor.plot_force_dist(all_steps, 'all')
-        MDForcesPredictor.plot_force_dist(all_steps_shortened, 'all_shortened')
-
-
+    def load_data_protocol_two():
+        all_positions, all_forces = MDForcesPredictor.alternate_load_data('../datasets/md/lj.dat', 0, 500)
+        print(len(all_positions))
+        internal_reps = MDForcesPredictor.produce_internal_from_arrangements(all_positions)
+        MDForcesPredictor.write_data('../datasets/md/iv_reps_guoqing.txt', internal_reps)
 
     @staticmethod
     def plot_force_dist(step, name):
         for i in range(step.shape[1]):
             coordinate_mags = step[:, i]
             (mags, freq) = utilities.bucket(coordinate_mags, .05)
+            freq = np.array(freq)
+            freq = np.divide(freq, freq.sum())
             plt.plot(mags, freq, 'ro')
+            plt.xlim([-6, 6])
             utilities.save_plot('dist_' + name + '_' + str(i))
             plt.clf()
 
@@ -153,22 +130,8 @@ class MDForcesPredictor:
         return cart_forces
 
     @staticmethod
-    def load_arrangements_in_internal(rel_path, start=0, end=None):
-        positions = MDForcesPredictor.load_data(rel_path, start, end)
-        count = 1
-        internal_reps = []
-        for arrangement in positions:
-            internal_reps.append(iv_utilities.produce_internal_basis(arrangement))
-            print(count)
-            count += 1
-        return internal_reps
-
-    @staticmethod
     def produce_internal_from_arrangements(positions):
-        internal_reps = []
-        for arrangement in positions:
-            internal_reps.append(iv_utilities.produce_internal_basis(arrangement))
-        return internal_reps
+        return parallel(iv_utilities.produce_internal_basis, positions)
 
     @staticmethod
     def load_data(rel_path, start=0, end=None):
@@ -191,7 +154,7 @@ class MDForcesPredictor:
 
     # for Guoqing's file format
     @staticmethod
-    def alternate_load_data(rel_path, start=0, end=None):
+    def alternate_load_data(rel_path, start=0, end=None, num_per_arrangement=108):
         data_file = open(utilities.file_path(__file__, rel_path), 'r')
         parsed_csv = csv.reader(data_file, delimiter=' ')
 
@@ -207,7 +170,7 @@ class MDForcesPredictor:
                 reading = True
                 count += 1
             elif reading == True:
-                if row[0] == 'ITEM:':
+                if row[0] == 'ITEM:' or num_per_arrangement == len(all_positions):
                     reading = False
                     all_positions.append(np.array(arrangement_positions))
                     all_forces.append(np.array(arrangement_forces))
@@ -239,12 +202,6 @@ class MDForcesPredictor:
         for real_force_vec, predicted_force_vec in zip(actual_forces, predicted):
             print('vector:')
             for i in range(3):
-
-### DAVID: there are two options for the file writing, the first, which is not commented out, creates
-### an error file tracking all forces and errors, but only printing those that are not cut out by the
-### threshold you set. I think this is preferable as it allows us to retain all of the data, but if
-### you'd rather only keep track of what we're printing, there is a commented out second version below
-
                 error = abs(predicted_force_vec[i] - real_force_vec[i]) / abs(real_force_vec[i]) * 100
                 # Added line below for writing values and error to error file
                 # err_file.write(str(real_force_vec[i]) + "," + str(predicted_force_vec[i]) + "," + str(error) + "\n")
@@ -253,18 +210,10 @@ class MDForcesPredictor:
                     print(predicted_force_vec[i])
                     errors.append(error)
 
-                # if abs(real_force_vec[i]) > thresholds[i]:
-                #     print(real_force_vec[i])
-                #     print(predicted_force_vec[i])
-                #     error = abs(predicted_force_vec[i] - real_force_vec[i]) / abs(real_force_vec[i]) * 100
-                #     errors.append(error)
-                #     # Added line below for writing values and error to error file
-                #     err_file.write(str(real_force_vec[i]) + "," + str(predicted_force_vec[i]) + "," + str(error) + "\n")
-
         print(errors)
         print(np.median(errors))
         print(np.average(errors))
 
-#MDForcesPredictor.predict(sys.argv[1], int(sys.argv[2]))
-#MDForcesPredictor.produce_internal()
-MDForcesPredictor.load_new_data()
+# MDForcesPredictor.predict(sys.argv[1], int(sys.argv[2]))
+# MDForcesPredictor.produce_internal()
+MDForcesPredictor.load_data_protocol_two()
