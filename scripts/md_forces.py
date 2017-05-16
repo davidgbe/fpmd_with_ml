@@ -35,13 +35,16 @@ class MDForcesPredictor:
 
     @staticmethod
     def predict(data_path, training_size=1000):
-        start = 2600
-        end = 6400
+        start = 3000
+        end = 10000
 
         # write first number of first arrangement used to make internal rep data in file
-        internal_reps = MDForcesPredictor.load_data(data_path + '/iv_reps_108_1_to_6_half.txt', start - 1000, end - 1000)
+        internal_reps = MDForcesPredictor.load_data(data_path + '/iv_reps_guoqing.txt', start, end)
         internal_reps_normed = [ iv_utilities.normalize_mat(rep) for rep in internal_reps ]
-        forces = MDForcesPredictor.load_data(data_path + '/for_108_7000TEST.txt', start, end)
+        positions, forces = MDForcesPredictor.alternate_load_data(data_path + '/lj.dat', start, end)
+        print(len(forces))
+        print(len(internal_reps))
+        del positions
         forces_k_space = MDForcesPredictor.convert_forces_to_internal(forces, internal_reps_normed)
         feature_mats = MDForcesPredictor.produce_feature_mats(internal_reps)
 
@@ -79,17 +82,11 @@ class MDForcesPredictor:
         MDForcesPredictor.calc_force_error(forces_testing, predicted_cart_forces)
 
     @staticmethod
-    def produce_internal():
-        start = 1000
-        end = 6500
-        internal_reps = MDForcesPredictor.load_arrangements_in_internal('../datasets/md/posfile_7000step_108part.txt', start, end)
-        MDForcesPredictor.write_data('../datasets/md/iv_reps_108_all.txt', internal_reps)
-
-    @staticmethod
     def load_data_protocol_two():
-        all_positions, all_forces = MDForcesPredictor.alternate_load_data('../datasets/md/lj.dat', 0, 500)
+        all_positions, all_forces = MDForcesPredictor.alternate_load_data('../datasets/md/lj.dat', 0)
         print(len(all_positions))
         internal_reps = MDForcesPredictor.produce_internal_from_arrangements(all_positions)
+        internal_reps = np.concatenate(internal_reps)
         MDForcesPredictor.write_data('../datasets/md/iv_reps_guoqing.txt', internal_reps)
 
     @staticmethod
@@ -170,25 +167,25 @@ class MDForcesPredictor:
                 reading = True
                 count += 1
             elif reading == True:
-                if row[0] == 'ITEM:' or num_per_arrangement == len(all_positions):
+                if row[0] == 'ITEM:' or num_per_arrangement == len(arrangement_positions):
                     reading = False
                     all_positions.append(np.array(arrangement_positions))
                     all_forces.append(np.array(arrangement_forces))
                     arrangement_positions = []
                     arrangement_forces = []
                     if count == end:
-                        return all_positions, all_forces
+                        return all_positions[start:], all_forces[start:]
                 else:
                     arrangement_positions.append(list(map(lambda x: float(x), row[1:4])))
                     arrangement_forces.append(list(map(lambda x: float(x), row[4:7])))
-        return all_positions, all_forces
+        data_file.close()
+        return all_positions[start:], all_forces[start:]
 
     @staticmethod
     def write_data(rel_path, data):
         data_file = open(utilities.file_path(__file__, rel_path), 'w')
         csv_writer = csv.writer(data_file, delimiter=',')
         for example in data:
-            print(example)
             data_file.write('NEW\n')
             for i in range(example.shape[0]):
                 csv_writer.writerow(example[i])
@@ -214,6 +211,6 @@ class MDForcesPredictor:
         print(np.median(errors))
         print(np.average(errors))
 
-# MDForcesPredictor.predict(sys.argv[1], int(sys.argv[2]))
+MDForcesPredictor.predict(sys.argv[1], int(sys.argv[2]))
 # MDForcesPredictor.produce_internal()
-MDForcesPredictor.load_data_protocol_two()
+# MDForcesPredictor.load_data_protocol_two()

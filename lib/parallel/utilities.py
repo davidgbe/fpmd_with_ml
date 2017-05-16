@@ -3,9 +3,16 @@ from lib.gaussian_process.utilities import create_pool
 from functools import partial
 
 def batched_task(bundled_task_args, task):
-    return list(map(task, bundled_task_args))
+    results = []
+    count = 0
+    for task_args in bundled_task_args:
+        results.append(task(task_args))
+        count += 1
+        print("%s percent" % str(float(count) / len(bundled_task_args) * 100))
+    return results
 
-def parallel(task, task_args, max_concurrent=None, batch_size=80):
+def parallel(task, task_args, max_concurrent=None, batch_size=100):
+    print('Begin parallel...')
     cores = mp.cpu_count() - 1
     max_concurrent = cores if max_concurrent is None else max_concurrent
     bundled_task_args = []
