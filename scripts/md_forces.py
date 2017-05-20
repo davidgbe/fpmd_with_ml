@@ -35,16 +35,13 @@ class MDForcesPredictor:
 
     @staticmethod
     def predict(data_path, training_size=1000):
-        start = 3000
-        end = 10000
+        start = 2000
+        end = 6000
 
         # write first number of first arrangement used to make internal rep data in file
-        internal_reps = MDForcesPredictor.load_data(data_path + '/iv_reps_guoqing.txt', start, end)
+        internal_reps = MDForcesPredictor.load_data(data_path + '/iv_reps_108_1_to_6_half.txt', start - 1000, end - 1000)
         internal_reps_normed = [ iv_utilities.normalize_mat(rep) for rep in internal_reps ]
-        positions, forces = MDForcesPredictor.alternate_load_data(data_path + '/lj.dat', start, end)
-        print(len(forces))
-        print(len(internal_reps))
-        del positions
+        forces = MDForcesPredictor.load_data(data_path + '/for_108_7000TEST.txt', start, end)
         forces_k_space = MDForcesPredictor.convert_forces_to_internal(forces, internal_reps_normed)
         feature_mats = MDForcesPredictor.produce_feature_mats(internal_reps)
 
@@ -195,17 +192,12 @@ class MDForcesPredictor:
     def calc_force_error(actual_forces, predicted, error_tolerance=0.03):
         #err_file = open("../err_" + error_tolerance + "_" + actual_forces.size + ".txt", 'w')
         errors = []
-        thresholds = 2 * np.absolute(actual_forces).mean(0) * error_tolerance
+        mean_force_comps = np.absolute(actual_forces).mean(0)
         for real_force_vec, predicted_force_vec in zip(actual_forces, predicted):
             print('vector:')
             for i in range(3):
-                error = abs(predicted_force_vec[i] - real_force_vec[i]) / abs(real_force_vec[i]) * 100
-                # Added line below for writing values and error to error file
-                # err_file.write(str(real_force_vec[i]) + "," + str(predicted_force_vec[i]) + "," + str(error) + "\n")
-                if abs(real_force_vec[i]) > thresholds[i]:
-                    print(real_force_vec[i])
-                    print(predicted_force_vec[i])
-                    errors.append(error)
+                error = abs(predicted_force_vec[i] - real_force_vec[i]) / mean_force_comps[i] * 100
+                errors.append(error)
 
         print(errors)
         print(np.median(errors))
