@@ -14,7 +14,7 @@ from copy import deepcopy
 class GaussianProcess:
     def __init__(self, covariance_func=None, use_saved_params=False):
         self.covariance_func = default_covariance_func if covariance_func is None else covariance_func
-        self.hyperparams = {'theta_amp': 1.0, 'theta_length': 1.0}
+        self.hyperparams = {'theta_amp': 1.0, 'theta_length': 1.0, 'theta_uncertainty': 0.05}
         self.learning_rates = {'theta_amp': 0.001, 'theta_length': 0.0005}
         self.cache_path = os.path.join(os.getcwd(), 'params')
         self.covariance_func = partial(self.covariance_func, hyperparams=self.hyperparams)
@@ -33,6 +33,7 @@ class GaussianProcess:
     def batch_predict(self, X, Y, target_X, batch_size=20):
         print('Creating training covariance')
         training_cov = cartesian_operation(X, function=self.covariance_func)
+        training_cov = training_cov + (self.hyperparams['theta_uncertainty'] * np.identity(training_cov.shape[0]))
         print('Inverting covariance mat')
         training_cov_inv = inv(training_cov)
         print('Finished matrix inversion')
