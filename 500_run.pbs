@@ -6,4 +6,4 @@ source fpmd_run
 # mkdir -p /staging/dgb/davidgbe/pip_dependencies
 # fpmd_hpc_install
 
-python3 ./scripts/md_forces.py /staging/dgb/davidgbe/md_data 500
+python3 ./scripts/md_forces.py /staging/dgb/davidgbe/md_data 500 0.01
