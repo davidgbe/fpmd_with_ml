@@ -12,9 +12,9 @@ from lib.internal_vector.utilities import compute_feature_mat_scale_factors, com
 from copy import deepcopy
 
 class GaussianProcess:
-    def __init__(self, covariance_func=None, use_saved_params=False):
+    def __init__(self, covariance_func=None, use_saved_params=False, uncertainty=0.05):
         self.covariance_func = default_covariance_func if covariance_func is None else covariance_func
-        self.hyperparams = {'theta_amp': 1.0, 'theta_length': 1.0, 'theta_uncertainty': 0.05}
+        self.hyperparams = {'theta_amp': 1.0, 'theta_length': 1.0, 'theta_uncertainty': uncertainty}
         self.learning_rates = {'theta_amp': 0.001, 'theta_length': 0.0005}
         self.cache_path = os.path.join(os.getcwd(), 'params')
         self.covariance_func = partial(self.covariance_func, hyperparams=self.hyperparams)

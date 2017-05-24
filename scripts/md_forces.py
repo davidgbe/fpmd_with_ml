@@ -34,7 +34,7 @@ class MDForcesPredictor:
         self.gp = GP()
 
     @staticmethod
-    def predict(data_path, training_size=1000):
+    def predict(data_path, training_size=1000, uncertainty=0.05):
         start = 2000
         end = 6000
 
@@ -66,7 +66,7 @@ class MDForcesPredictor:
 
         utilities.print_memory()
 
-        gp = GP()
+        gp = GP(uncertainty=uncertainty)
 
         predictions = gp.predict(feature_mats_training, forces_k_space_training, feature_mats_testing)
         predicted_cart_forces = MDForcesPredictor.convert_internal_forces_to_cartesian(predictions, internal_reps_normed_testing)
@@ -203,6 +203,6 @@ class MDForcesPredictor:
         print(np.median(errors))
         print(np.average(errors))
 
-MDForcesPredictor.predict(sys.argv[1], int(sys.argv[2]))
+MDForcesPredictor.predict(sys.argv[1], int(sys.argv[2]), float(sys.argv[3]))
 # MDForcesPredictor.produce_internal()
 # MDForcesPredictor.load_data_protocol_two()
