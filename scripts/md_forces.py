@@ -7,7 +7,6 @@ from lib.gaussian_process.model import GaussianProcess as GP
 from numpy.linalg import pinv
 import sys
 import gc
-import matplotlib.pyplot as plt
 
 class MDForcesPredictor:
 
@@ -86,17 +85,17 @@ class MDForcesPredictor:
         internal_reps = np.concatenate(internal_reps)
         MDForcesPredictor.write_data('../datasets/md/iv_reps_guoqing.txt', internal_reps)
 
-    @staticmethod
-    def plot_force_dist(step, name):
-        for i in range(step.shape[1]):
-            coordinate_mags = step[:, i]
-            (mags, freq) = utilities.bucket(coordinate_mags, .05)
-            freq = np.array(freq)
-            freq = np.divide(freq, freq.sum())
-            plt.plot(mags, freq, 'ro')
-            plt.xlim([-6, 6])
-            utilities.save_plot('dist_' + name + '_' + str(i))
-            plt.clf()
+    # @staticmethod
+    # def plot_force_dist(step, name):
+    #     for i in range(step.shape[1]):
+    #         coordinate_mags = step[:, i]
+    #         (mags, freq) = utilities.bucket(coordinate_mags, .05)
+    #         freq = np.array(freq)
+    #         freq = np.divide(freq, freq.sum())
+    #         plt.plot(mags, freq, 'ro')
+    #         plt.xlim([-6, 6])
+    #         utilities.save_plot('dist_' + name + '_' + str(i))
+    #         plt.clf()
 
     @staticmethod
     def produce_feature_mats(internal_reps):
