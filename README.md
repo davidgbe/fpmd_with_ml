@@ -51,4 +51,4 @@
     ```
   1. Get running!
   
-Base on https://journals.aps.org/prl/abstract/10.1103/PhysRevLett.114.096405
+Based on https://journals.aps.org/prl/abstract/10.1103/PhysRevLett.114.096405
