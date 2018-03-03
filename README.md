@@ -50,3 +50,5 @@
     export PYTHONPATH=$PYTHONPATH:~
     ```
   1. Get running!
+  
+Base on https://journals.aps.org/prl/abstract/10.1103/PhysRevLett.114.096405
